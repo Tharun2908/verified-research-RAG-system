@@ -5,3 +5,4 @@ __pycache__/
 data/raw_pdfs/
 *.db
 .DS_Store
+backend/data/

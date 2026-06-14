@@ -1,0 +1,38 @@
+[
+  {
+    "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+    "authors": "Lewis et al.",
+    "year": 2020,
+    "abstract": "Large pre-trained language models store factual knowledge in their parameters, but their ability to access and manipulate knowledge precisely is limited. We introduce retrieval-augmented generation, combining a parametric memory with a non-parametric memory retrieved from a dense vector index of Wikipedia, accessed with a pretrained neural retriever."
+  },
+  {
+    "title": "Survey of Hallucination in Natural Language Generation",
+    "authors": "Ji et al.",
+    "year": 2023,
+    "abstract": "Natural language generation models can produce text that is fluent but unfaithful to the source input, a phenomenon known as hallucination. We categorize hallucination into intrinsic and extrinsic types, review contributing factors from data and modeling, and survey metrics and mitigation methods across summarization, dialogue, and question answering."
+  },
+  {
+    "title": "Dense Passage Retrieval for Open-Domain Question Answering",
+    "authors": "Karpukhin et al.",
+    "year": 2020,
+    "abstract": "Open-domain question answering relies on efficient passage retrieval to select candidate contexts. We show that retrieval can be practically implemented using dense representations alone, where embeddings are learned from a small number of questions and passages by a dual-encoder framework, outperforming traditional sparse BM25 methods."
+  },
+  {
+    "title": "Measuring Faithfulness in Abstractive Summarization",
+    "authors": "Maynez et al.",
+    "year": 2020,
+    "abstract": "Abstractive summarization systems often generate content not supported by the source document. We conduct a large-scale human evaluation of faithfulness and factuality, finding that textual entailment models are better at detecting unfaithful content than standard automatic metrics like ROUGE, which correlate poorly with human judgments of faithfulness."
+  },
+  {
+    "title": "Cross-Encoder Reranking for Neural Information Retrieval",
+    "authors": "Nogueira and Cho",
+    "year": 2019,
+    "abstract": "Passage reranking with BERT-based cross-encoders substantially improves retrieval quality over first-stage retrievers. By jointly encoding the query and candidate passage, the cross-encoder captures fine-grained interactions that bi-encoders miss, at the cost of higher latency, making it suitable as a second-stage reranker over a small candidate set."
+  },
+  {
+    "title": "Calibration of Pre-trained Transformers",
+    "authors": "Desai and Durrett",
+    "year": 2020,
+    "abstract": "Pre-trained transformers can be overconfident in their predictions. We study calibration of BERT and RoBERTa on natural language inference and paraphrase detection, finding that in-domain they are relatively well-calibrated, but under distribution shift they become miscalibrated, and temperature scaling helps recover reliable confidence estimates."
+  }
+]
