@@ -42,15 +42,30 @@ class GenerationClient:
     # --- stub backend ------------------------------------------------------
     def _stub_response(self, prompt: str) -> str:
         """
-        Deterministic fake answer. It echoes a little of the prompt so you can
-        eyeball that the right prompt is flowing through the pipeline, but it does
-        NOT call any model. This is enough to build and test M2-M8 with no GPU.
+        Deterministic fake answer for local/no-GPU dev. It detects how many numbered
+        sources the prompt contains and produces a citation-shaped answer that
+        references them, so the retrieve->prompt->generate->cite flow is testable
+        end-to-end without a real model. NOT a real answer — just structurally valid.
         """
+        import re
+        # count how many "[n]" source markers the prompt contains
+        source_nums = sorted(set(int(n) for n in re.findall(r"\[(\d+)\]", prompt)))
+
+        if source_nums:
+            cites = " ".join(f"[{n}]" for n in source_nums[:3])
+            return (
+                "[STUB ANSWER] Based on the retrieved evidence, the topic in question "
+                f"is addressed by the provided sources {cites}. The first source "
+                f"establishes the core finding [{source_nums[0]}], and additional "
+                "sources provide supporting context. (This is placeholder text from the "
+                "no-GPU stub; a real vLLM/Mistral backend would generate a substantive "
+                "cited answer here.)"
+            )
+        # fallback if no sources were formatted into the prompt
         preview = prompt.strip().replace("\n", " ")[:120]
         return (
-            "[STUB ANSWER] This is a placeholder generation produced locally without a model. "
-            f"It was generated in response to a prompt beginning with: \"{preview}...\". "
-            "When LLM_BASE_URL points at a real vLLM server, this will be a real cited answer."
+            "[STUB ANSWER] Placeholder generation (no sources detected in prompt). "
+            f"Prompt began with: \"{preview}...\"."
         )
 
     # --- real OpenAI-compatible HTTP backend -------------------------------
