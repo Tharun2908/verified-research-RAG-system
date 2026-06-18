@@ -6,3 +6,7 @@ data/raw_pdfs/
 *.db
 .DS_Store
 backend/data/
+project3_M1_summary.md
+project3_M1_summary.md.pdf
+project3_summary.md
+*.summary.md
