@@ -58,7 +58,7 @@ async def generate_answer(
 
     # 2. number the evidence 1..N — this numbering is the citation contract
     evidence = [
-        {"number": i, "title": h["title"], "text": h["text"]}
+        {"number": i, "chunk_id": h["chunk_id"], "title": h["title"], "text": h["text"]}
         for i, h in enumerate(hits, start=1)
     ]
 

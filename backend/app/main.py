@@ -5,6 +5,8 @@ from app.api.routes_health import router as health_router
 from app.api.routes_search import router as search_router
 from app.api.routes_retrieve import router as retrieve_router  
 from app.api.routes_research import router as research_router   
+from app.api.routes_verify import router as verify_router   
+                           
                                               
 
 # create the app
@@ -18,6 +20,8 @@ app.include_router(search_router)
 app.include_router(retrieve_router) 
 
 app.include_router(research_router) 
+
+app.include_router(verify_router) 
 
 # mount the Prometheus /metrics endpoint
 metrics_app = make_asgi_app()

@@ -110,6 +110,7 @@ async def hybrid_search(
             chunk = await session.get(models.Chunk, cid)
             paper = await session.get(models.Paper, chunk.paper_id) if chunk else None
             results.append({
+                "chunk_id": cid,
                 "score": round(score, 4),
                 "title": paper.title if paper else "(unknown)",
                 "text": chunk.text if chunk else "",
