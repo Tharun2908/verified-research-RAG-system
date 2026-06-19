@@ -24,11 +24,13 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime
 
+import time
 from app.db.session import AsyncSessionLocal
 from app.db import models
 from app.services.generator import generate_answer
 from app.services.claim_extractor import extract_claims
 from app.services.verifier import verifier, label_for_score
+from app.monitoring import metrics
 
 
 def _evidence_text_for_claim(citations: list[int], evidence: list[dict]) -> str:
@@ -50,13 +52,23 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
     Full verified-research flow with persistence. Returns a summary dict including the
     persisted job_id, the answer, per-claim labels, and the unsupported_claim_rate.
     """
-    # 1 + 2: generate answer, extract claims
+    metrics.RESEARCH_REQUESTS.inc()
+    request_start = time.perf_counter()
+
+    # 1: generate (retrieve happens inside generate_answer)
+    gen_start = time.perf_counter()
     gen = await generate_answer(question, top_k=top_k)
+    metrics.STAGE_LATENCY.labels(stage="generate").observe(time.perf_counter() - gen_start)
     answer = gen["answer"]
     evidence = gen["evidence"]   # [{number, title, text}]
-    claims = extract_claims(answer)   # [{claim_text, citations}]
 
-    # 3: score + label each claim
+    # 2: extract claims
+    extract_start = time.perf_counter()
+    claims = extract_claims(answer)   # [{claim_text, citations}]
+    metrics.STAGE_LATENCY.labels(stage="extract").observe(time.perf_counter() - extract_start)
+
+    # 3: score + label each claim (timed as the "verify" stage)
+    verify_start = time.perf_counter()
     scored_claims = []
     for c in claims:
         ev_text = _evidence_text_for_claim(c["citations"], evidence)
@@ -68,6 +80,9 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
             "support_score": score,
             "label": label,
         })
+        metrics.CLAIMS_VERIFIED.inc()
+        metrics.CLAIMS_BY_LABEL.labels(label=label).inc()
+    metrics.STAGE_LATENCY.labels(stage="verify").observe(time.perf_counter() - verify_start)
 
     # 4: headline metric
     n_claims = len(scored_claims)
@@ -77,6 +92,8 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
     grounding_score = (
         sum(c["support_score"] for c in scored_claims) / n_claims if n_claims else 0.0
     )
+    metrics.UNSUPPORTED_CLAIM_RATE.set(unsupported_rate)
+    metrics.GROUNDING_SCORE.set(grounding_score)
 
     # 5: persist the related record across four tables, atomically
     async with AsyncSessionLocal() as session:
@@ -129,6 +146,8 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
 
         await session.commit()
         job_id = job.job_id
+        
+    metrics.REQUEST_LATENCY.observe(time.perf_counter() - request_start)
 
     return {
         "job_id": job_id,
@@ -140,6 +159,8 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
         "grounding_score": round(grounding_score, 4),
         "claims": scored_claims,
     }
+    
+    
 
 
 async def _demo():
