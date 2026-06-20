@@ -91,8 +91,19 @@ def fetch_arxiv(
     out_path: str = "data/arxiv_papers.json",
 ) -> int:
     """Fetch `total` abstracts across the given categories; write JSON. Returns count."""
-    # query: cat:cs.CL OR cat:cs.IR
-    search_query = " OR ".join(f"cat:{c}" for c in categories)
+    # query: (cat:cs.CL OR cat:cs.IR) AND (topic keywords in abstract)
+    cat_clause = " OR ".join(f"cat:{c}" for c in categories)
+    topic_terms = [
+        "hallucination",
+        "retrieval",
+        "retrieval-augmented",
+        "faithfulness",
+        "grounding",
+        "RAG",
+        "factuality",
+    ]
+    topic_clause = " OR ".join(f'abs:"{t}"' for t in topic_terms)
+    search_query = f"({cat_clause}) AND ({topic_clause})"
 
     all_papers: list[dict] = []
     seen_ids: set[str] = set()
