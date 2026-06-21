@@ -1,0 +1,58 @@
+{
+  "note": "Judge (Llama-3.3-70B via OpenRouter) treated as reference; judge is imperfect and was systematically stricter than the verifier (M8). Metrics are agreement-framed-as-correctness, not ground truth.",
+  "judge_model": "meta-llama/llama-3.3-70b-instruct",
+  "judge_provider": "OpenRouter",
+  "judge_run_date": "2026-06-21",
+  "judge_prompt": "Binary supported/unsupported judgment of each claim against its evidence; one-word answer. See gemini_judge.py JUDGE_PROMPT.",
+  "all_claims": {
+    "n": 409,
+    "cells": {
+      "true_removal": 14,
+      "wrongly_removed_FP": 13,
+      "missed_FN": 58,
+      "correctly_kept": 324
+    },
+    "n_removed_by_verifier": 27,
+    "n_kept_by_verifier": 382,
+    "n_judge_unsupported": 72,
+    "removal_precision": 0.5185,
+    "recall": 0.1944,
+    "supported_claim_loss": 0.0386,
+    "retained_unsupported_rate_by_judge": 0.1518,
+    "f1": 0.2828
+  },
+  "cited_arm": {
+    "n": 193,
+    "cells": {
+      "true_removal": 3,
+      "wrongly_removed_FP": 6,
+      "missed_FN": 34,
+      "correctly_kept": 150
+    },
+    "n_removed_by_verifier": 9,
+    "n_kept_by_verifier": 184,
+    "n_judge_unsupported": 37,
+    "removal_precision": 0.3333,
+    "recall": 0.0811,
+    "supported_claim_loss": 0.0385,
+    "retained_unsupported_rate_by_judge": 0.1848,
+    "f1": 0.1304
+  },
+  "plain_arm": {
+    "n": 216,
+    "cells": {
+      "true_removal": 11,
+      "wrongly_removed_FP": 7,
+      "missed_FN": 24,
+      "correctly_kept": 174
+    },
+    "n_removed_by_verifier": 18,
+    "n_kept_by_verifier": 198,
+    "n_judge_unsupported": 35,
+    "removal_precision": 0.6111,
+    "recall": 0.3143,
+    "supported_claim_loss": 0.0387,
+    "retained_unsupported_rate_by_judge": 0.1212,
+    "f1": 0.4151
+  }
+}

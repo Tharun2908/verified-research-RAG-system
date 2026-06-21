@@ -1,0 +1,36 @@
+{
+  "arm1_basic_rag": {
+    "n": 216,
+    "supported": 174,
+    "weak": 24,
+    "unsupported": 18,
+    "unsupported_rate": 0.0833
+  },
+  "arm2_rag_citations": {
+    "n": 193,
+    "supported": 167,
+    "weak": 17,
+    "unsupported": 9,
+    "unsupported_rate": 0.0466
+  },
+  "arm3_verified": {
+    "n_before": 193,
+    "removed_unsupported": 9,
+    "n_delivered": 184,
+    "unsupported_rate_before": 0.0466,
+    "unsupported_rate_after": 0.0,
+    "supported_claim_retention": 0.9534
+  },
+  "cited_arm_by_question_type": {
+    "grounded": {
+      "n": 180,
+      "unsupported": 8,
+      "unsupported_rate": 0.0444
+    },
+    "bait": {
+      "n": 13,
+      "unsupported": 1,
+      "unsupported_rate": 0.0769
+    }
+  }
+}

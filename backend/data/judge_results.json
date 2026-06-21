@@ -1,0 +1,3274 @@
+[
+  {
+    "qid": 1,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 1,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 1,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 1,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 1,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 1,
+    "arm": "plain",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 1,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 1,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 1,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "plain",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "plain",
+    "claim_index": 6,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "plain",
+    "claim_index": 7,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "plain",
+    "claim_index": 8,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "cited",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "cited",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "cited",
+    "claim_index": 6,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "cited",
+    "claim_index": 7,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "cited",
+    "claim_index": 8,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "cited",
+    "claim_index": 9,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 2,
+    "arm": "cited",
+    "claim_index": 10,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 3,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 3,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 3,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 3,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 3,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 3,
+    "arm": "plain",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 3,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 3,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 3,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 3,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "plain",
+    "claim_index": 5,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "plain",
+    "claim_index": 6,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "plain",
+    "claim_index": 7,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "plain",
+    "claim_index": 8,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "plain",
+    "claim_index": 9,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "plain",
+    "claim_index": 10,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "cited",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 4,
+    "arm": "cited",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 5,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 5,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 5,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 5,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 5,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 5,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 5,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 5,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 5,
+    "arm": "cited",
+    "claim_index": 4,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 5,
+    "arm": "cited",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 5,
+    "arm": "cited",
+    "claim_index": 6,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 5,
+    "arm": "cited",
+    "claim_index": 7,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 5,
+    "arm": "cited",
+    "claim_index": 8,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 5,
+    "arm": "cited",
+    "claim_index": 9,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 6,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 6,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 6,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 6,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 6,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 6,
+    "arm": "plain",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 6,
+    "arm": "plain",
+    "claim_index": 6,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 6,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 6,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 6,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 6,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 6,
+    "arm": "cited",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 6,
+    "arm": "cited",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 7,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 7,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 7,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 7,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 7,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 7,
+    "arm": "plain",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 7,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 7,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 7,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 7,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 7,
+    "arm": "cited",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 7,
+    "arm": "cited",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 7,
+    "arm": "cited",
+    "claim_index": 6,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 7,
+    "arm": "cited",
+    "claim_index": 7,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 8,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 8,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 8,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 8,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 8,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 8,
+    "arm": "plain",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 8,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 8,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 8,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 8,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 8,
+    "arm": "cited",
+    "claim_index": 4,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 8,
+    "arm": "cited",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "plain",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "plain",
+    "claim_index": 6,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "plain",
+    "claim_index": 7,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "plain",
+    "claim_index": 8,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "cited",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "cited",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "cited",
+    "claim_index": 6,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "cited",
+    "claim_index": 7,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 9,
+    "arm": "cited",
+    "claim_index": 8,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 10,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 10,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 11,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 11,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 11,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 11,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 11,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 12,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 12,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 12,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 12,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 12,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 12,
+    "arm": "plain",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 12,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 12,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 12,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 12,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 12,
+    "arm": "cited",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 12,
+    "arm": "cited",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 12,
+    "arm": "cited",
+    "claim_index": 6,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 13,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 13,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 13,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 13,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 13,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 13,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 13,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 13,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 14,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 14,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 14,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 14,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 14,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 14,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 14,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 14,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 14,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 15,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 15,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 15,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 15,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 15,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 15,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 15,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 15,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 16,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 16,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 16,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 16,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 16,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "plain",
+    "claim_index": 5,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "plain",
+    "claim_index": 6,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "cited",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "cited",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "cited",
+    "claim_index": 6,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "cited",
+    "claim_index": 7,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "cited",
+    "claim_index": 8,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 17,
+    "arm": "cited",
+    "claim_index": 9,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 18,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 18,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 18,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 18,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 18,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 18,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 18,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 18,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 18,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 19,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 19,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 19,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 19,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 19,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 19,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 20,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 20,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 20,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 20,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 20,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 20,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 20,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 20,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 20,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 20,
+    "arm": "cited",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 20,
+    "arm": "cited",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 20,
+    "arm": "cited",
+    "claim_index": 6,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 20,
+    "arm": "cited",
+    "claim_index": 7,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 20,
+    "arm": "cited",
+    "claim_index": 8,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 21,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 21,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 21,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 21,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 21,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 21,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 21,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 21,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 21,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 22,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 22,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 22,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 22,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 22,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 22,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 23,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 23,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 23,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 23,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 23,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 23,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 23,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 23,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 24,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 24,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 24,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 24,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 24,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 24,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 24,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 24,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 24,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 24,
+    "arm": "cited",
+    "claim_index": 4,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 24,
+    "arm": "cited",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 25,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 25,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 25,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 25,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 25,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 25,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 26,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 26,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 26,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 26,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 26,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 26,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 26,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 26,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 27,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 27,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 27,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 27,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 27,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 27,
+    "arm": "plain",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 27,
+    "arm": "plain",
+    "claim_index": 6,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 27,
+    "arm": "plain",
+    "claim_index": 7,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 27,
+    "arm": "plain",
+    "claim_index": 8,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 27,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 27,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 27,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 27,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 28,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 28,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 28,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 28,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 28,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 28,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "plain",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "plain",
+    "claim_index": 6,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "cited",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "cited",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "cited",
+    "claim_index": 6,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "cited",
+    "claim_index": 7,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 29,
+    "arm": "cited",
+    "claim_index": 8,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 30,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 30,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 30,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 30,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 30,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 30,
+    "arm": "plain",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 30,
+    "arm": "plain",
+    "claim_index": 6,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 30,
+    "arm": "plain",
+    "claim_index": 7,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 30,
+    "arm": "plain",
+    "claim_index": 8,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 30,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 30,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 30,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 30,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 31,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 31,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 31,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 31,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 31,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 31,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 31,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 31,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 31,
+    "arm": "cited",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 31,
+    "arm": "cited",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 32,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 32,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 32,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 32,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 32,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 32,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 32,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 32,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 32,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 32,
+    "arm": "cited",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 32,
+    "arm": "cited",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 32,
+    "arm": "cited",
+    "claim_index": 6,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 33,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 33,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 33,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 33,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 33,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 33,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 33,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 33,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 34,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 34,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 34,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 35,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 35,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 35,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 35,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 35,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 35,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 35,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 35,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 36,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 36,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 36,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 36,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 36,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 36,
+    "arm": "plain",
+    "claim_index": 5,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 36,
+    "arm": "plain",
+    "claim_index": 6,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 36,
+    "arm": "plain",
+    "claim_index": 7,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 36,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 36,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 37,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 37,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 38,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 38,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 38,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 38,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 38,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 39,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 39,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 40,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 40,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 40,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 40,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 40,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 40,
+    "arm": "plain",
+    "claim_index": 5,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 40,
+    "arm": "plain",
+    "claim_index": 6,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 40,
+    "arm": "plain",
+    "claim_index": 7,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 40,
+    "arm": "plain",
+    "claim_index": 8,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 40,
+    "arm": "plain",
+    "claim_index": 9,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 40,
+    "arm": "plain",
+    "claim_index": 10,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 40,
+    "arm": "plain",
+    "claim_index": 11,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 40,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 41,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 41,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 41,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 41,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 41,
+    "arm": "plain",
+    "claim_index": 4,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 41,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 41,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 41,
+    "arm": "cited",
+    "claim_index": 2,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 41,
+    "arm": "cited",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 42,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 42,
+    "arm": "plain",
+    "claim_index": 1,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 42,
+    "arm": "plain",
+    "claim_index": 2,
+    "verifier_label": "Unsupported",
+    "verifier_binary": "UNSUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 42,
+    "arm": "plain",
+    "claim_index": 3,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "UNSUPPORTED"
+  },
+  {
+    "qid": 42,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Weak",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 42,
+    "arm": "cited",
+    "claim_index": 1,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 43,
+    "arm": "plain",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  },
+  {
+    "qid": 43,
+    "arm": "cited",
+    "claim_index": 0,
+    "verifier_label": "Supported",
+    "verifier_binary": "SUPPORTED",
+    "judge_verdict": "SUPPORTED"
+  }
+]
