@@ -64,8 +64,15 @@ def main():
         "removed_unsupported": cited_unsup,
         "n_delivered": delivered,
         "unsupported_rate_before": arm2["unsupported_rate"],
-        "unsupported_rate_after": 0.0,   # by construction, flagged claims removed
-        "supported_claim_retention": round(rate(delivered, cited_total), 4),
+        # NOTE: this 0.0 is CIRCULAR — it only reflects the verifier's OWN labels
+        # (we removed exactly what the verifier flagged). It does NOT measure whether
+        # the delivered answer is actually clean. For the independent, judge-graded
+        # quality of the verifier (precision/recall/retained-unsupported-rate), see
+        # analyze_verifier_quality.py / verifier_quality.json. The judge found ~15%
+        # of RETAINED claims still unsupported — i.e. filtering reduces but does not
+        # eliminate unsupported content.
+        "unsupported_rate_after_by_verifier_labels": 0.0,
+        "claim_retention_rate": round(rate(delivered, cited_total), 4),
     }
 
     # breakdown by question type (grounded vs bait), on the cited arm
@@ -104,8 +111,9 @@ def main():
     print(f"\nArm 3  Verified system (cited answers, unsupported claims removed)")
     print(f"   before: {arm3['n_before']} claims, {arm3['unsupported_rate_before']*100:.1f}% unsupported")
     print(f"   verification removed {arm3['removed_unsupported']} unsupported claims")
-    print(f"   delivered: {arm3['n_delivered']} claims, ~0% unsupported")
-    print(f"   supported-claim retention = {arm3['supported_claim_retention']*100:.1f}%")
+    print(f"   delivered: {arm3['n_delivered']} claims (~0% unsupported BY VERIFIER'S OWN LABELS — circular;")
+    print(f"     see verifier_quality.json: judge found ~15% of retained claims still unsupported)")
+    print(f"   claim retention rate = {arm3['claim_retention_rate']*100:.1f}%")
     print(f"\nCited-arm unsupported rate by question type:")
     for t, v in sorted(type_rates.items()):
         print(f"   {t:<9}: {v['unsupported']}/{v['n']} = {v['unsupported_rate']*100:.1f}% unsupported")
