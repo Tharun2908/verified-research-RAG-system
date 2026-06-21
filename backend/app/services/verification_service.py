@@ -91,6 +91,7 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
         # masquerade as a perfectly-grounded answer. Instead mark the result
         # unverifiable so a 0% rate is never mistaken for success.
         verification_status = "unverifiable"
+        n_unsupported = 0
         unsupported_rate = None
         grounding_score = None
     else:
@@ -163,10 +164,15 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
         "job_id": job_id,
         "question": question,
         "answer": answer,
+        "verification_status": verification_status,
         "n_claims": n_claims,
         "n_unsupported": n_unsupported,
-        "unsupported_claim_rate": round(unsupported_rate, 4),
-        "grounding_score": round(grounding_score, 4),
+        "unsupported_claim_rate": (
+            round(unsupported_rate, 4) if unsupported_rate is not None else None
+        ),
+        "grounding_score": (
+            round(grounding_score, 4) if grounding_score is not None else None
+        ),
         "claims": scored_claims,
     }
     

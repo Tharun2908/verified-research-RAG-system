@@ -10,13 +10,13 @@ Run AFTER `vllm serve ...` is up on localhost:8000.
 USAGE:
     pip install httpx
 
-    # More realistic RAG benchmark:
-    # Same instruction/template, but varied evidence/question per request.
-    python bench_vllm.py --tag fp8_prefix --prompt-mode vary_context
+    # Realistic unique varied-context RAG benchmark:
+    # Same instruction/template, but unique evidence/question content per request.
+    python bench_vllm.py --tag fp8_prefix_unique --prompt-mode vary_context --out bench_fp8_prefix_unique.json
 
     # Prefix-cache stress test:
-    # Same full prompt every request, useful as an upper-bound prefix-cache test.
-    python bench_vllm.py --tag fp8_prefix_stress --prompt-mode repeat_full
+    # Same full prompt every request. Useful as upper-bound prefix-cache test.
+    python bench_vllm.py --tag fp8_prefix_stress --prompt-mode repeat_full --out bench_fp8_prefix_stress.json
 
 OPTIONS:
     --url http://localhost:8000
@@ -29,12 +29,14 @@ OPTIONS:
     --prompt-mode repeat_full | vary_context
 """
 
-import time
-import json
-import asyncio
+from __future__ import annotations
+
 import argparse
+import asyncio
+import json
 import statistics
-from typing import Dict, List, Tuple
+import time
+from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 
@@ -48,7 +50,7 @@ RAG_INSTRUCTION = (
     "below. Cite the sources you use with their bracketed number, e.g. [1]."
 )
 
-# The old fixed evidence/question. This is useful for a prefix-cache stress test.
+# Old fixed prompt. Useful only for prefix-cache stress / upper-bound tests.
 FIXED_EVIDENCE_BLOCK = "\n".join(
     f"[{i}] "
     + (
@@ -110,30 +112,52 @@ TOPICS: List[Tuple[str, str]] = [
 
 def build_varied_evidence_block(prompt_id: int, n_chunks: int = 5) -> str:
     """
-    Build deterministic but varied evidence chunks.
+    Build deterministic but globally unique evidence chunks.
 
-    This keeps the same RAG prompt template across requests, but changes the
-    retrieved evidence content. That better matches real RAG serving, where
-    the instruction is stable but retrieved chunks differ per query.
+    Important:
+    Earlier versions varied content only through prompt_id % 10 and prompt_id % 7.
+    That created repeated prompt patterns and let vLLM reuse full cached prompts
+    across warmup/concurrency levels.
+
+    This version includes the full prompt_id inside the evidence text, so every
+    prompt_id creates a unique prompt. Prefix caching now mostly reflects reuse
+    of the shared instruction/template prefix, not accidental full-prompt reuse.
     """
     topic, _ = TOPICS[prompt_id % len(TOPICS)]
 
     chunks = []
+
     for j in range(1, n_chunks + 1):
         variant = (prompt_id + j) % 7
+        unique_case_id = f"case-{prompt_id}-chunk-{j}"
 
         text = (
-            f"{topic.title()} is evaluated in setting {variant}, where retrieved passages "
-            f"are used as evidence for generating answers. The method compares grounded "
-            f"answers against unsupported generations and measures whether the answer can "
-            f"be traced back to the provided source text. Passage {j} discusses retrieval "
-            f"quality, evidence coverage, and the effect of source relevance on final answer "
-            f"faithfulness. "
+            f"{topic.title()} is evaluated in setting {variant} for unique request {unique_case_id}. "
+            f"The retrieved passage describes evidence item {j} for request {prompt_id}, including "
+            f"dataset slice {prompt_id}, retrieval condition {variant}, and claim family {prompt_id}-{j}. "
+            f"The method compares grounded answers against unsupported generations and measures whether "
+            f"the answer can be traced back to the provided source text. Passage {j} discusses retrieval "
+            f"quality, evidence coverage, and source relevance for this specific request {prompt_id}. "
         ) * 3
 
         chunks.append(f"[{j}] {text}")
 
     return "\n".join(chunks)
+
+
+def build_varied_question(prompt_id: int) -> str:
+    """
+    Build a question that is also unique per prompt_id.
+
+    It keeps the semantic task shape similar, but prevents repeated full question
+    strings across benchmark levels.
+    """
+    _, base_question = TOPICS[prompt_id % len(TOPICS)]
+
+    return (
+        f"{base_question} "
+        f"Answer for evaluation request {prompt_id}, and use only the numbered sources."
+    )
 
 
 def build_prompt(prompt_id: int, prompt_mode: str) -> str:
@@ -143,11 +167,11 @@ def build_prompt(prompt_id: int, prompt_mode: str) -> str:
     prompt_mode:
       - repeat_full:
           Same full prompt every request.
-          This is useful for measuring an upper-bound prefix-cache/stress scenario.
+          Use only as prefix-cache stress / upper-bound benchmark.
 
       - vary_context:
-          Same instruction/template, but varied evidence/question per request.
-          This is more realistic for RAG serving.
+          Same instruction/template, but globally unique evidence/question per request.
+          This is the better RAG-style benchmark.
     """
     if prompt_mode == "repeat_full":
         evidence_block = FIXED_EVIDENCE_BLOCK
@@ -155,7 +179,7 @@ def build_prompt(prompt_id: int, prompt_mode: str) -> str:
 
     elif prompt_mode == "vary_context":
         evidence_block = build_varied_evidence_block(prompt_id)
-        _, question = TOPICS[prompt_id % len(TOPICS)]
+        question = build_varied_question(prompt_id)
 
     else:
         raise ValueError(f"Unknown prompt_mode: {prompt_mode}")
@@ -190,19 +214,24 @@ async def one_request(
     }
 
     t0 = time.perf_counter()
-    r = await client.post(f"{url}/v1/chat/completions", json=body, timeout=120)
-    dt = time.perf_counter() - t0
+    response = await client.post(
+        f"{url}/v1/chat/completions",
+        json=body,
+        timeout=120,
+    )
+    latency_s = time.perf_counter() - t0
 
-    r.raise_for_status()
-    data = r.json()
+    response.raise_for_status()
+    data = response.json()
 
     usage = data.get("usage", {})
+
     completion_tokens = usage.get("completion_tokens", 0)
     prompt_tokens = usage.get("prompt_tokens", 0)
     total_tokens = usage.get("total_tokens", prompt_tokens + completion_tokens)
 
     return {
-        "latency_s": dt,
+        "latency_s": latency_s,
         "completion_tokens": completion_tokens,
         "prompt_tokens": prompt_tokens,
         "total_tokens": total_tokens,
@@ -217,12 +246,11 @@ async def run_level(
     max_tokens: int,
     prompt_mode: str,
     prompt_offset: int = 0,
-) -> Dict[str, float]:
+) -> Dict[str, Any]:
     """
     Fire n_requests with the given concurrency and return aggregate stats.
 
-    Note:
-      tokens_per_s is completion/output tokens per second, not prompt+completion tokens/sec.
+    tokens_per_s is completion/output tokens per second, not prompt+completion tokens/sec.
     """
     limits = httpx.Limits(
         max_connections=concurrency,
@@ -232,7 +260,7 @@ async def run_level(
     async with httpx.AsyncClient(limits=limits) as client:
         sem = asyncio.Semaphore(concurrency)
 
-        async def guarded(i: int):
+        async def guarded(i: int) -> Dict[str, float]:
             async with sem:
                 return await one_request(
                     client=client,
@@ -245,14 +273,14 @@ async def run_level(
 
         wall_start = time.perf_counter()
         results = await asyncio.gather(*[guarded(i) for i in range(n_requests)])
-        wall = time.perf_counter() - wall_start
+        wall_s = time.perf_counter() - wall_start
 
     latencies = [x["latency_s"] for x in results]
     latencies.sort()
 
-    total_completion_tokens = sum(x["completion_tokens"] for x in results)
-    total_prompt_tokens = sum(x["prompt_tokens"] for x in results)
-    total_tokens = sum(x["total_tokens"] for x in results)
+    total_completion_tokens = sum(int(x["completion_tokens"]) for x in results)
+    total_prompt_tokens = sum(int(x["prompt_tokens"]) for x in results)
+    total_tokens = sum(int(x["total_tokens"]) for x in results)
 
     def pct(p: float) -> float:
         k = max(
@@ -264,27 +292,29 @@ async def run_level(
         )
         return latencies[k]
 
-    req_per_s = n_requests / wall
-    completion_tokens_per_s = total_completion_tokens / wall
+    req_per_s = n_requests / wall_s
+    completion_tokens_per_s = total_completion_tokens / wall_s
 
     return {
         "concurrency": concurrency,
         "requests": n_requests,
-        "wall_s": round(wall, 2),
+        "wall_s": round(wall_s, 2),
 
         "req_per_s": round(req_per_s, 2),
 
-        # Backward-compatible name:
-        # This is completion/output tokens/sec, same as completion_tokens_per_s.
+        # Backward-compatible key:
+        # This means completion/output tokens per second.
         "tokens_per_s": round(completion_tokens_per_s, 1),
 
-        # More explicit names:
+        # Explicit keys:
         "completion_tokens": total_completion_tokens,
         "completion_tokens_per_s": round(completion_tokens_per_s, 1),
         "prompt_tokens": total_prompt_tokens,
         "total_tokens": total_tokens,
+
         "avg_completion_tokens_per_request": round(total_completion_tokens / n_requests, 1),
         "avg_prompt_tokens_per_request": round(total_prompt_tokens / n_requests, 1),
+        "avg_total_tokens_per_request": round(total_tokens / n_requests, 1),
 
         "latency_p50_s": round(pct(50), 3),
         "latency_p95_s": round(pct(95), 3),
@@ -297,28 +327,28 @@ async def run_level(
 # Main
 # ---------------------------------------------------------------------
 
-async def main():
-    ap = argparse.ArgumentParser()
+async def main() -> None:
+    parser = argparse.ArgumentParser()
 
-    ap.add_argument("--url", default="http://localhost:8000")
-    ap.add_argument("--model", default="mistralai/Mistral-7B-Instruct-v0.3")
-    ap.add_argument("--concurrencies", default="1,8,32,64")
-    ap.add_argument("--requests-per-level", type=int, default=64)
-    ap.add_argument("--max-tokens", type=int, default=200)
-    ap.add_argument("--tag", default="bf16")
-    ap.add_argument("--out", default="bench_results.json")
+    parser.add_argument("--url", default="http://localhost:8000")
+    parser.add_argument("--model", default="mistralai/Mistral-7B-Instruct-v0.3")
+    parser.add_argument("--concurrencies", default="1,8,32,64")
+    parser.add_argument("--requests-per-level", type=int, default=64)
+    parser.add_argument("--max-tokens", type=int, default=200)
+    parser.add_argument("--tag", default="bf16")
+    parser.add_argument("--out", default="bench_results.json")
 
-    ap.add_argument(
+    parser.add_argument(
         "--prompt-mode",
         choices=["repeat_full", "vary_context"],
         default="vary_context",
         help=(
-            "repeat_full = same full prompt every request, useful as prefix-cache stress test; "
-            "vary_context = same instruction/template but varied evidence/question per request."
+            "repeat_full = same full prompt every request, useful as upper-bound prefix-cache stress test; "
+            "vary_context = same instruction/template but globally unique evidence/question per request."
         ),
     )
 
-    args = ap.parse_args()
+    args = parser.parse_args()
 
     levels = [int(x.strip()) for x in args.concurrencies.split(",") if x.strip()]
 
@@ -326,12 +356,9 @@ async def main():
     print(f"URL: {args.url}")
     print(f"Concurrencies: {levels}")
     print(f"Prompt mode: {args.prompt_mode}")
-    print(f"Max output tokens cap: {args.max_tokens}\n")
+    print(f"Max output tokens cap: {args.max_tokens}")
+    print()
 
-    # Warmup is not measured.
-    # In vary_context mode, use a large offset so warmup prompts are not the same
-    # as measured prompts. In repeat_full mode, the full prompt is intentionally
-    # identical by design.
     print("Warmup...")
     await run_level(
         url=args.url,
@@ -340,26 +367,29 @@ async def main():
         n_requests=8,
         max_tokens=args.max_tokens,
         prompt_mode=args.prompt_mode,
-        prompt_offset=1_000_000,
+        # Far away from measured offsets.
+        # In vary_context mode, prompts are globally unique because full prompt_id is in the text.
+        prompt_offset=999_000_000,
     )
+    print("Warmup complete. Running measured benchmark...")
 
     all_stats = []
 
-    for level_idx, c in enumerate(levels):
+    for level_idx, concurrency in enumerate(levels):
         # Ensure at least one full wave at each concurrency.
-        n = max(args.requests_per_level, c)
+        n_requests = max(args.requests_per_level, concurrency)
 
-        # Offset measured prompts per level so vary_context does not reuse the
-        # exact same request set across all concurrency levels.
-        prompt_offset = level_idx * 100_000
+        # Disjoint prompt ID ranges per level.
+        # Because full prompt_id is inside the evidence/question text, these prompts are unique.
+        prompt_offset = (level_idx + 1) * 10_000_000
 
-        print(f"  concurrency={c}, requests={n} ...", flush=True)
+        print(f"  concurrency={concurrency}, requests={n_requests} ...", flush=True)
 
         stats = await run_level(
             url=args.url,
             model=args.model,
-            concurrency=c,
-            n_requests=n,
+            concurrency=concurrency,
+            n_requests=n_requests,
             max_tokens=args.max_tokens,
             prompt_mode=args.prompt_mode,
             prompt_offset=prompt_offset,
@@ -371,34 +401,42 @@ async def main():
             f"    {stats['req_per_s']} req/s | "
             f"{stats['tokens_per_s']} completion tok/s | "
             f"avg_out={stats['avg_completion_tokens_per_request']} tok/req | "
+            f"avg_prompt={stats['avg_prompt_tokens_per_request']} tok/req | "
             f"p50={stats['latency_p50_s']}s "
             f"p95={stats['latency_p95_s']}s "
             f"p99={stats['latency_p99_s']}s"
         )
 
-    out = {
+    output = {
         "tag": args.tag,
         "model": args.model,
         "url": args.url,
         "max_tokens": args.max_tokens,
         "prompt_mode": args.prompt_mode,
-        "note": (
+        "prompt_generation_note": (
+            "For prompt_mode=vary_context, the full prompt_id is included in the evidence/question text. "
+            "Warmup and each concurrency level use disjoint prompt_id ranges to avoid accidental full-prompt "
+            "cache reuse across levels."
+        ),
+        "metric_note": (
             "tokens_per_s is completion/output tokens per second, not prompt+completion tokens/sec. "
             "max_tokens is a cap; actual completion length can be lower."
         ),
         "levels": all_stats,
     }
 
-    with open(args.out, "w") as f:
-        json.dump(out, f, indent=2)
+    with open(args.out, "w", encoding="utf-8") as f:
+        json.dump(output, f, ensure_ascii=False, indent=2)
 
-    print(f"\n=== SUMMARY [{args.tag}] ===")
+    print()
+    print(f"=== SUMMARY [{args.tag}] ===")
     print(f"prompt_mode={args.prompt_mode}")
     print(
         f"{'conc':>5} "
         f"{'req/s':>8} "
         f"{'out tok/s':>10} "
         f"{'avg out':>8} "
+        f"{'avg prm':>8} "
         f"{'p50':>7} "
         f"{'p95':>7} "
         f"{'p99':>7}"
@@ -410,6 +448,7 @@ async def main():
             f"{s['req_per_s']:>8} "
             f"{s['tokens_per_s']:>10} "
             f"{s['avg_completion_tokens_per_request']:>8} "
+            f"{s['avg_prompt_tokens_per_request']:>8} "
             f"{s['latency_p50_s']:>7} "
             f"{s['latency_p95_s']:>7} "
             f"{s['latency_p99_s']:>7}"
