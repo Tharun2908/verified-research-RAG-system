@@ -18,8 +18,8 @@
     "removed_unsupported": 9,
     "n_delivered": 184,
     "unsupported_rate_before": 0.0466,
-    "unsupported_rate_after": 0.0,
-    "supported_claim_retention": 0.9534
+    "unsupported_rate_after_by_verifier_labels": 0.0,
+    "claim_retention_rate": 0.9534
   },
   "cited_arm_by_question_type": {
     "grounded": {
