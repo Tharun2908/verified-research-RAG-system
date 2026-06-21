@@ -86,14 +86,24 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
 
     # 4: headline metric
     n_claims = len(scored_claims)
-    n_unsupported = sum(1 for c in scored_claims if c["label"] == "Unsupported")
-    unsupported_rate = (n_unsupported / n_claims) if n_claims else 0.0
-    # overall grounding = mean support score (a simple summary number)
-    grounding_score = (
-        sum(c["support_score"] for c in scored_claims) / n_claims if n_claims else 0.0
-    )
-    metrics.UNSUPPORTED_CLAIM_RATE.set(unsupported_rate)
-    metrics.GROUNDING_SCORE.set(grounding_score)
+    if n_claims == 0:
+        # No claims were extracted -> NOTHING was verified. Reporting 0.0 here would
+        # masquerade as a perfectly-grounded answer. Instead mark the result
+        # unverifiable so a 0% rate is never mistaken for success.
+        verification_status = "unverifiable"
+        unsupported_rate = None
+        grounding_score = None
+    else:
+        verification_status = "verified"
+        n_unsupported = sum(1 for c in scored_claims if c["label"] == "Unsupported")
+        unsupported_rate = n_unsupported / n_claims
+        grounding_score = sum(c["support_score"] for c in scored_claims) / n_claims
+
+    # only push real numbers to the gauges; skip when unverifiable
+    if unsupported_rate is not None:
+        metrics.UNSUPPORTED_CLAIM_RATE.set(unsupported_rate)
+    if grounding_score is not None:
+        metrics.GROUNDING_SCORE.set(grounding_score)
 
     # 5: persist the related record across four tables, atomically
     async with AsyncSessionLocal() as session:
