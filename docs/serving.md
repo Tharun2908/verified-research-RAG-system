@@ -1,99 +1,147 @@
 # Serving Benchmark — Mistral-7B on NVIDIA H200 (vLLM)
 
-Performance characterization of the generation backend served with **vLLM 0.23** on a single
-**NVIDIA H200** (cl-worker37). Measures throughput and latency across concurrency levels, and
-ablates two optimizations relevant to this RAG workload: **fp8 quantization** and **prefix
-caching**. Benchmarked with realistic grounded-RAG prompts (fixed instruction + 5 evidence
-chunks + question), 200 max output tokens, greedy decoding.
+Performance characterization of a local generation backend served with **vLLM 0.23** on a single
+**NVIDIA H200** (`cl-worker37`). The benchmark measures request throughput, output-token throughput,
+and end-to-end latency across concurrency levels, and ablates two serving optimizations relevant to
+RAG workloads:
 
-Model: `mistralai/Mistral-7B-Instruct-v0.3` · `--max-model-len 4096` · `--gpu-memory-utilization 0.85`.
+- **FP8 quantization** on H200 tensor cores.
+- **Prefix caching** for repeated RAG instruction/template prefixes.
+
+Model: `mistralai/Mistral-7B-Instruct-v0.3`  
+Server: `vllm serve ... --max-model-len 4096 --gpu-memory-utilization 0.85`  
+Decoding: greedy (`temperature=0.0`)  
+Benchmark client: async `httpx`, semaphore-bounded concurrency.
 
 ---
 
-## 1. Baseline: bf16 throughput scaling
+## Benchmark modes
 
-| Concurrency | req/s | tokens/s | p50 (s) | p95 (s) | p99 (s) |
-| ---: | ---: | ---: | ---: | ---: | ---: |
+Two prompt modes were used.
+
+| Mode | What varies? | What it measures |
+|---|---|---|
+| `repeat_full` | Nothing. The full prompt is repeated: instruction + evidence + question. | Prefix-cache stress test / upper-bound reuse. |
+| `vary_context` | Same instruction/template, but evidence chunks and questions vary across requests. | More realistic RAG serving benchmark. |
+
+The **primary results** below use `vary_context`, because this better matches real RAG serving: the instruction template is stable, while retrieved evidence and user questions differ.
+
+---
+
+## 1. Primary benchmark: varied-context RAG prompts
+
+These runs use `--prompt-mode vary_context`, with approximately **120–130 output tokens/request**. Throughput is reported as **completion/output tokens per second**, not prompt+completion tokens/sec.
+
+### 1.1 BF16 + prefix caching baseline
+
+| Concurrency | req/s | output tok/s | avg output tok/req | p50 (s) | p95 (s) | p99 (s) |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1  | 1.59  | 192.2  | 121.2 | 0.583 | 1.013 | 1.015 |
+| 8  | 10.65 | 1302.3 | 122.3 | 0.689 | 1.084 | 1.194 |
+| 32 | 23.37 | 2968.1 | 127.0 | 1.027 | 1.606 | 1.683 |
+| 64 | 29.45 | 3654.5 | 124.1 | 1.593 | 2.134 | 2.145 |
+
+This is the realistic BF16 baseline for the updated benchmark. Compared with the earlier single-prompt run, request throughput is lower because the generated answers are roughly twice as long, but output-token throughput remains high.
+
+---
+
+### 1.2 FP8 vs BF16 with prefix caching enabled
+
+Both runs use varied-context prompts and prefix caching.
+
+| Concurrency | BF16 req/s | FP8 req/s | req/s gain | BF16 output tok/s | FP8 output tok/s | tok/s gain | BF16 p99 | FP8 p99 |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1  | 1.59  | 2.30  | **+44.7%** | 192.2  | 276.8  | **+44.0%** | 1.015 | 0.699 |
+| 8  | 10.65 | 13.55 | **+27.2%** | 1302.3 | 1773.6 | **+36.2%** | 1.194 | 0.915 |
+| 32 | 23.37 | 26.91 | **+15.1%** | 2968.1 | 3323.0 | **+12.0%** | 1.683 | 1.500 |
+| 64 | 29.45 | 33.88 | **+15.0%** | 3654.5 | 4172.5 | **+14.2%** | 2.145 | 1.865 |
+
+**Finding:** FP8 improved throughput and reduced tail latency at every concurrency level. At 64-way concurrency, FP8 increased throughput from **29.45 → 33.88 req/s** and **3.65k → 4.17k output tok/s**, while reducing p99 latency from **2.15s → 1.87s**.
+
+The speedup is largest at low concurrency, where compute is a stronger bottleneck. At higher concurrency, batching and memory movement become more important, so the relative FP8 gain shrinks but remains positive.
+
+---
+
+### 1.3 Prefix caching ablation under FP8
+
+Both runs use FP8 and varied-context prompts.
+
+| Concurrency | no-prefix req/s | prefix req/s | req/s gain | no-prefix output tok/s | prefix output tok/s | tok/s gain | no-prefix p99 | prefix p99 |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1  | 2.24 | 2.30  | **+2.7%**  | 276.8  | 276.8  | **+0.0%**  | 0.696 | 0.699 |
+| 8  | 11.64 | 13.55 | **+16.4%** | 1473.3 | 1773.6 | **+20.4%** | 1.098 | 0.915 |
+| 32 | 19.44 | 26.91 | **+38.4%** | 2383.2 | 3323.0 | **+39.4%** | 2.575 | 1.500 |
+| 64 | 22.80 | 33.88 | **+48.6%** | 2839.6 | 4172.5 | **+46.9%** | 2.796 | 1.865 |
+
+**Finding:** Prefix caching still helps substantially even when evidence and questions vary. At 64-way concurrency, prefix caching improved FP8 throughput from **22.8 → 33.9 req/s** and **2.84k → 4.17k output tok/s**, while reducing p99 latency from **2.80s → 1.87s**.
+
+The benefit grows with concurrency because more simultaneous requests share the same instruction template and prompt structure, allowing vLLM to reuse cached prefix states and reduce repeated prefill work.
+
+---
+
+## 2. Prefix-cache stress test: repeated full prompt
+
+The earlier benchmark used a single repeated RAG-shaped prompt: fixed instruction, fixed evidence chunks, and fixed question. This is useful as a **stress test / upper-bound** for prefix caching, but it should not be interpreted as the only realistic RAG setting.
+
+These runs generated shorter completions, roughly **~60 output tokens/request**, so request throughput is not directly comparable with the varied-context benchmark above.
+
+### 2.1 BF16 throughput scaling: repeated full prompt
+
+| Concurrency | req/s | output tok/s | p50 (s) | p95 (s) | p99 (s) |
+|---:|---:|---:|---:|---:|---:|
 | 1  | 3.30  | 194.6  | 0.302 | 0.308 | 0.310 |
 | 8  | 21.81 | 1297.3 | 0.346 | 0.425 | 0.425 |
 | 32 | 45.95 | 2745.4 | 0.648 | 0.736 | 0.739 |
 | 64 | 58.50 | 3496.4 | 1.036 | 1.077 | 1.084 |
 
-**Throughput scaled ~18×** (195 → 3,496 tok/s) from concurrency 1 → 64 via vLLM's continuous
-batching, while p99 latency stayed **under 1.1 s**. Throughput was still increasing at concurrency
-64, so the 7B workload continues to benefit from higher request-level parallelism on the H200.
-(This is a throughput/latency observation only — GPU/SM utilization, memory bandwidth, and power
-draw were not measured, so it does not by itself establish how close the device is to saturation.)
+Throughput scaled strongly from concurrency 1 to 64 via vLLM continuous batching, while p99 latency stayed under 1.1s. This is a throughput/latency observation only: GPU/SM utilization, memory bandwidth, and power draw were not measured.
 
 ---
 
-## 2. fp8 quantization vs bf16
+### 2.2 FP8 vs BF16: repeated full prompt
 
-Re-served with `--quantization fp8` (dynamic fp8; the H200 has native fp8 tensor cores). Identical
-benchmark.
-
-| Concurrency | bf16 tok/s | fp8 tok/s | fp8 speedup | bf16 p99 | fp8 p99 |
-| ---: | ---: | ---: | ---: | ---: | ---: |
+| Concurrency | BF16 output tok/s | FP8 output tok/s | FP8 speedup | BF16 p99 | FP8 p99 |
+|---:|---:|---:|---:|---:|---:|
 | 1  | 194.6  | 279.4  | **+44%** | 0.310 | 0.223 |
 | 8  | 1297.3 | 1698.2 | **+31%** | 0.425 | 0.305 |
 | 32 | 2745.4 | 3014.7 | **+10%** | 0.739 | 0.681 |
 | 64 | 3496.4 | 3911.5 | **+12%** | 1.084 | 0.963 |
 
-**fp8 was faster AND lower-latency at every level** — up to **+44% throughput** and **~28% lower
-p99** at low concurrency, courtesy of the H200's hardware fp8 path. Output quality remained
-coherent (spot-checked).
-
-**Why the speedup shrinks with concurrency (+44% → +12%):** at low concurrency the workload is
-**compute-bound**, so faster fp8 matmuls dominate; at high concurrency it shifts toward
-**memory-bandwidth / batching-bound**, where raw compute speedup matters less. The fp8 win is
-largest exactly where compute is the bottleneck.
+FP8 was faster and lower-latency at every level in the repeated-prompt benchmark.
 
 ---
 
-## 3. Prefix caching (fp8)
+### 2.3 Prefix caching under FP8: repeated full prompt
 
-Grounded-RAG prompts share a long fixed instruction prefix across every request. Prefix caching
-computes that prefix's KV-cache once and reuses it. Ablated with `--no-enable-prefix-caching` vs
-`--enable-prefix-caching` (both fp8).
-
-| Concurrency | no-prefix tok/s | prefix tok/s | speedup | no-prefix p99 | prefix p99 |
-| ---: | ---: | ---: | ---: | ---: | ---: |
+| Concurrency | no-prefix output tok/s | prefix output tok/s | speedup | no-prefix p99 | prefix p99 |
+|---:|---:|---:|---:|---:|---:|
 | 1  | 269.3  | 278.5  | +3%  | 0.228 | 0.232 |
 | 8  | 1387.4 | 1723.7 | **+24%** | 0.413 | 0.348 |
 | 32 | 2142.2 | 2993.3 | **+40%** | 0.969 | 0.698 |
 | 64 | 2507.0 | 3661.6 | **+46%** | 1.513 | 1.039 |
 
-**The win grows with concurrency (+3% → +46%)** — and that's workload-specific: prefix caching's
-value is proportional to how much prefix is *shared across concurrent requests*. A fixed-instruction
-RAG system maximizes that sharing, so the more concurrent requests, the more redundant prefill is
-eliminated. p99 latency at 64-way concurrency dropped **31%** (1.51 s → 1.04 s).
+This confirms the upper-bound behavior: when the entire prompt is repeated, prefix caching can eliminate a large amount of repeated prefill work. At 64-way concurrency, p99 latency dropped from **1.51s → 1.04s**.
 
 ---
 
-## 4. Takeaways
+## 3. Takeaways
 
-For this RAG serving workload, fp8 and prefix caching provide **complementary** benefits. fp8
-improves low-concurrency performance by accelerating model execution on the H200's tensor cores,
-while prefix caching improves high-concurrency serving by reusing the shared instruction prefix
-across requests. The best **measured** configuration — **fp8 + prefix caching** — reached **61.0
-req/s and 3.66k tok/s at concurrency 64, with p99 latency ~1.04 s**.
+- **Best measured realistic configuration:** `fp8 + prefix caching` on varied-context RAG prompts, reaching **33.9 req/s**, **4.17k output tok/s**, and **1.87s p99 latency** at concurrency 64.
+- **FP8 helps model execution:** under varied-context prompts with prefix caching, FP8 improved concurrency-64 throughput by roughly **14–15%** and reduced p99 latency by roughly **13%** compared with BF16.
+- **Prefix caching helps serving efficiency:** under FP8 with varied-context prompts, prefix caching improved concurrency-64 throughput by roughly **47–49%** and reduced p99 latency by roughly **33%** compared with no prefix caching.
+- **Prompt design matters:** repeated full-prompt benchmarks are useful as prefix-cache stress tests, while varied-context benchmarks better represent normal RAG serving where evidence and questions change across requests.
+- **H200 FP8 is hardware-accelerated**, not emulated; the FP8 speedup is specific to GPUs with native FP8 support.
 
-- **The optimizations are regime-dependent and workload-aware:** fp8 helps most when compute-bound
-  (low concurrency); prefix caching helps most when many concurrent requests share the instruction
-  prefix (high concurrency). They are complementary across the load curve.
-- **H200 fp8 is hardware-accelerated**, not emulated — the fp8 throughput gain is specific to this
-  class of GPU and would not appear on pre-fp8 hardware.
-- **Note on the "best config" comparison:** a single bf16 + no-prefix-caching run was not measured
-  as a separate arm (the bf16 baseline used vLLM's defaults), so the fp8+prefix improvement over a
-  pure bf16/no-prefix baseline is not stated as a single combined multiplier here — each
-  optimization's effect is reported against its own controlled ablation above.
+---
 
-### Method notes
-- vLLM 0.23, single H200, Mistral-7B-Instruct-v0.3, 200 max tokens, greedy, realistic RAG prompts.
-- **`max_tokens=200` is a cap, not the actual generation length.** With greedy decoding the model
-  hit its stop token earlier — derived average output was ~60 tokens/request (e.g. 3,911 tok/s ÷
-  65.2 req/s ≈ 60 at fp8/conc-64). Throughput numbers reflect these ~60-token completions.
-- 64 requests/level, warmup pass excluded, latency percentiles over per-request end-to-end time.
-- Benchmark client: `cluster/bench_vllm.py` (async httpx, semaphore-bounded concurrency).
-- Note: recent vLLM enables prefix caching by default; the isolated effect in §3 comes from the
-  explicit `--no-enable-prefix-caching` vs `--enable-prefix-caching` comparison.
+## Method notes
+
+- vLLM 0.23, single NVIDIA H200, Mistral-7B-Instruct-v0.3.
+- Server settings: `--max-model-len 4096`, `--gpu-memory-utilization 0.85`.
+- FP8 runs used `--quantization fp8 --dtype auto`.
+- Prefix-caching ablation used explicit `--enable-prefix-caching` vs `--no-enable-prefix-caching`.
+- Benchmark client: `bench_vllm.py`, using async `httpx` and semaphore-bounded concurrency.
+- Each level used 64 requests; warmup pass excluded.
+- Latency percentiles are per-request end-to-end latency measured from the benchmark client.
+- `max_tokens=200` is a cap, not the actual generation length.
+- `output tok/s` / `completion tok/s` counts generated completion tokens only, using `usage.completion_tokens` returned by the vLLM OpenAI-compatible API.
