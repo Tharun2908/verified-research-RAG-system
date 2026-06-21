@@ -20,7 +20,10 @@ Model: `mistralai/Mistral-7B-Instruct-v0.3` · `--max-model-len 4096` · `--gpu-
 | 64 | 58.50 | 3496.4 | 1.036 | 1.077 | 1.084 |
 
 **Throughput scaled ~18×** (195 → 3,496 tok/s) from concurrency 1 → 64 via vLLM's continuous
-batching, while p99 latency stayed **under 1.1 s** — the H200 is far from saturation for a 7B model.
+batching, while p99 latency stayed **under 1.1 s**. Throughput was still increasing at concurrency
+64, so the 7B workload continues to benefit from higher request-level parallelism on the H200.
+(This is a throughput/latency observation only — GPU/SM utilization, memory bandwidth, and power
+draw were not measured, so it does not by itself establish how close the device is to saturation.)
 
 ---
 
@@ -69,16 +72,27 @@ eliminated. p99 latency at 64-way concurrency dropped **31%** (1.51 s → 1.04 s
 
 ## 4. Takeaways
 
-- **Best config for this workload: fp8 + prefix caching.** Together they roughly **double**
-  effective throughput at scale vs a bf16 / no-prefix baseline, while lowering p99 latency.
+For this RAG serving workload, fp8 and prefix caching provide **complementary** benefits. fp8
+improves low-concurrency performance by accelerating model execution on the H200's tensor cores,
+while prefix caching improves high-concurrency serving by reusing the shared instruction prefix
+across requests. The best **measured** configuration — **fp8 + prefix caching** — reached **61.0
+req/s and 3.66k tok/s at concurrency 64, with p99 latency ~1.04 s**.
+
 - **The optimizations are regime-dependent and workload-aware:** fp8 helps most when compute-bound
   (low concurrency); prefix caching helps most when many concurrent requests share the instruction
   prefix (high concurrency). They are complementary across the load curve.
 - **H200 fp8 is hardware-accelerated**, not emulated — the fp8 throughput gain is specific to this
   class of GPU and would not appear on pre-fp8 hardware.
+- **Note on the "best config" comparison:** a single bf16 + no-prefix-caching run was not measured
+  as a separate arm (the bf16 baseline used vLLM's defaults), so the fp8+prefix improvement over a
+  pure bf16/no-prefix baseline is not stated as a single combined multiplier here — each
+  optimization's effect is reported against its own controlled ablation above.
 
 ### Method notes
 - vLLM 0.23, single H200, Mistral-7B-Instruct-v0.3, 200 max tokens, greedy, realistic RAG prompts.
+- **`max_tokens=200` is a cap, not the actual generation length.** With greedy decoding the model
+  hit its stop token earlier — derived average output was ~60 tokens/request (e.g. 3,911 tok/s ÷
+  65.2 req/s ≈ 60 at fp8/conc-64). Throughput numbers reflect these ~60-token completions.
 - 64 requests/level, warmup pass excluded, latency percentiles over per-request end-to-end time.
 - Benchmark client: `cluster/bench_vllm.py` (async httpx, semaphore-bounded concurrency).
 - Note: recent vLLM enables prefix caching by default; the isolated effect in §3 comes from the
