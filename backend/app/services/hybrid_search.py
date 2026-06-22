@@ -31,7 +31,7 @@ from sentence_transformers import SentenceTransformer
 from app.db.session import AsyncSessionLocal
 from app.db import models
 from app.db.qdrant_setup import get_qdrant_client, COLLECTION_NAME
-from app.services.bm25_retriever import BM25Retriever
+from app.services.bm25_retriever import get_bm25_retriever
 from app.services.fusion import reciprocal_rank_fusion
 from app.services.reranker import rerank
 
@@ -62,11 +62,16 @@ async def hybrid_search(
     candidate_pool: int = 50,   # how many to keep after fusion, before reranking
     top_k: int = 5,             # final results after reranking
 ) -> list[dict]:
-    # --- 1. dense leg: ranked qdrant_ids -> map to chunk_ids -------------------
-    dense_qdrant_ids = _dense_search_ids(query, top_k=candidate_pool)
+    # --- 1. dense leg: ranked qdrant_ids (no DB connection needed for the embed) ---
+    dense_qdrant_ids = await asyncio.to_thread(_dense_search_ids, query, candidate_pool)
 
+    # --- 2. sparse leg: BM25 (in-memory shared index, no DB) ---
+    bm25 = await get_bm25_retriever()
+    bm25_hits = bm25.search(query, top_k=candidate_pool)
+    bm25_chunk_ids = [cid for (cid, _score) in bm25_hits]
+
+    # --- DB block A: map dense qdrant_ids -> chunk_ids, fetch candidate texts ---
     async with AsyncSessionLocal() as session:
-        # map qdrant_ids -> chunk_ids, preserving dense rank order
         dense_chunk_ids: list[int] = []
         if dense_qdrant_ids:
             stmt = select(models.Chunk.chunk_id, models.Chunk.qdrant_id).where(
@@ -78,33 +83,29 @@ async def hybrid_search(
                 qid_to_cid[str(q)] for q in dense_qdrant_ids if str(q) in qid_to_cid
             ]
 
-        # --- 2. sparse leg: BM25 ranked chunk_ids -----------------------------
-        bm25 = BM25Retriever()
-        await bm25.build()
-        bm25_hits = bm25.search(query, top_k=candidate_pool)
-        bm25_chunk_ids = [cid for (cid, _score) in bm25_hits]
-
-        # --- 3. RRF fuse the two ranked id-lists ------------------------------
+        # RRF fuse the two ranked id-lists (pure CPU, but cheap)
         fused = reciprocal_rank_fusion(
             [dense_chunk_ids, bm25_chunk_ids],
             top_k=candidate_pool,
         )
         fused_ids = [cid for (cid, _score) in fused]
-
-        # --- 4. fetch candidate texts for reranking ---------------------------
         if not fused_ids:
             return []
+
+        # fetch candidate texts for reranking
         stmt = select(models.Chunk.chunk_id, models.Chunk.text).where(
             models.Chunk.chunk_id.in_(fused_ids)
         )
         text_rows = (await session.execute(stmt)).all()
         text_map = {row.chunk_id: row.text for row in text_rows}
         candidates = [(cid, text_map[cid]) for cid in fused_ids if cid in text_map]
+    # <-- session A released here, BEFORE the expensive rerank
 
-        # --- 5. cross-encoder rerank to final top_k ---------------------------
-        reranked = rerank(query, candidates, top_k=top_k)
+    # --- 3. cross-encoder rerank (NO DB connection held during this) ---
+    reranked = await asyncio.to_thread(rerank, query, candidates, top_k)
 
-        # --- 6. resolve final ids to text + paper provenance ------------------
+    # --- DB block B: resolve final ids to text + paper provenance ---
+    async with AsyncSessionLocal() as session:
         results = []
         for cid, score in reranked:
             chunk = await session.get(models.Chunk, cid)

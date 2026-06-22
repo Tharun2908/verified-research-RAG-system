@@ -69,7 +69,28 @@ class BM25Retriever:
             key=lambda pair: pair[1],
             reverse=True,
         )
-        return [(cid, float(s)) for cid, s in ranked[:top_k]]
+        return [(cid, float(s)) for cid, s in ranked if s>0][:top_k]
+    
+# --- module-level singleton: build the index ONCE, reuse across requests -----
+# Rebuilding BM25 per request reads + tokenizes + indexes the whole corpus
+# synchronously, blocking the event loop. We build once at startup instead.
+_shared_retriever: BM25Retriever | None = None
+
+
+async def get_bm25_retriever() -> BM25Retriever:
+    """Return the process-wide BM25 index, building it once on first use."""
+    global _shared_retriever
+    if _shared_retriever is None:
+        r = BM25Retriever()
+        await r.build()
+        _shared_retriever = r
+    return _shared_retriever
+
+
+async def warm_bm25() -> int:
+    """Build the shared index eagerly (called at app startup). Returns chunk count."""
+    r = await get_bm25_retriever()
+    return len(r.chunk_ids)
 
 
 # --- quick manual test -----------------------------------------------------

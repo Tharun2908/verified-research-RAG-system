@@ -1,0 +1,63 @@
+{
+  "tag": "after_fix",
+  "url": "http://localhost:8000",
+  "endpoint": "/verify",
+  "top_k": 5,
+  "levels": [
+    {
+      "concurrency": 1,
+      "requests": 64,
+      "errors": 0,
+      "wall_s": 176.09,
+      "req_per_s": 0.36,
+      "latency_p50_s": 2.784,
+      "latency_p95_s": 2.99,
+      "latency_p99_s": 3.009,
+      "latency_mean_s": 2.751
+    },
+    {
+      "concurrency": 4,
+      "requests": 64,
+      "errors": 0,
+      "wall_s": 185.12,
+      "req_per_s": 0.35,
+      "latency_p50_s": 11.513,
+      "latency_p95_s": 14.019,
+      "latency_p99_s": 17.677,
+      "latency_mean_s": 11.494
+    },
+    {
+      "concurrency": 8,
+      "requests": 64,
+      "errors": 0,
+      "wall_s": 187.78,
+      "req_per_s": 0.34,
+      "latency_p50_s": 23.362,
+      "latency_p95_s": 35.537,
+      "latency_p99_s": 36.334,
+      "latency_mean_s": 22.885
+    },
+    {
+      "concurrency": 16,
+      "requests": 64,
+      "errors": 19,
+      "wall_s": 322.1,
+      "req_per_s": 0.14,
+      "latency_p50_s": 58.925,
+      "latency_p95_s": 109.138,
+      "latency_p99_s": 120.454,
+      "latency_mean_s": 67.625
+    },
+    {
+      "concurrency": 32,
+      "requests": 64,
+      "errors": 36,
+      "wall_s": 122.17,
+      "req_per_s": 0.23,
+      "latency_p50_s": 45.045,
+      "latency_p95_s": 116.762,
+      "latency_p99_s": 116.777,
+      "latency_mean_s": 70.455
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "tag": "pool10_torch2",
+  "url": "http://localhost:8000",
+  "endpoint": "/verify",
+  "top_k": 5,
+  "levels": [
+    {
+      "concurrency": 1,
+      "requests": 64,
+      "errors": 0,
+      "wall_s": 101.08,
+      "req_per_s": 0.63,
+      "latency_p50_s": 1.129,
+      "latency_p95_s": 3.363,
+      "latency_p99_s": 3.694,
+      "latency_mean_s": 1.579
+    },
+    {
+      "concurrency": 4,
+      "requests": 64,
+      "errors": 0,
+      "wall_s": 37.15,
+      "req_per_s": 1.72,
+      "latency_p50_s": 2.283,
+      "latency_p95_s": 2.676,
+      "latency_p99_s": 2.707,
+      "latency_mean_s": 2.283
+    },
+    {
+      "concurrency": 8,
+      "requests": 64,
+      "errors": 0,
+      "wall_s": 27.41,
+      "req_per_s": 2.33,
+      "latency_p50_s": 3.363,
+      "latency_p95_s": 3.833,
+      "latency_p99_s": 4.059,
+      "latency_mean_s": 3.338
+    },
+    {
+      "concurrency": 16,
+      "requests": 64,
+      "errors": 0,
+      "wall_s": 27.33,
+      "req_per_s": 2.34,
+      "latency_p50_s": 6.824,
+      "latency_p95_s": 9.58,
+      "latency_p99_s": 10.115,
+      "latency_mean_s": 6.478
+    },
+    {
+      "concurrency": 32,
+      "requests": 64,
+      "errors": 0,
+      "wall_s": 27.22,
+      "req_per_s": 2.35,
+      "latency_p50_s": 12.254,
+      "latency_p95_s": 15.3,
+      "latency_p99_s": 16.435,
+      "latency_mean_s": 12.009
+    }
+  ]
+}
