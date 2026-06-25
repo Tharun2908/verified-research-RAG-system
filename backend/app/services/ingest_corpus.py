@@ -111,7 +111,6 @@ async def ingest_corpus(json_path: str, reset: bool = True) -> int:
         await session.commit()
 
         # --- 4. BATCHED Qdrant upserts (~100 points per call) ---
-        # --- 4. BATCHED Qdrant upserts (~100 points per call) ---
         print(f"Upserting {len(points)} vectors to Qdrant...")
         BATCH = 100
         for i in range(0, len(points), BATCH):
