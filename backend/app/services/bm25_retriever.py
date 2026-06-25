@@ -92,6 +92,21 @@ async def warm_bm25() -> int:
     r = await get_bm25_retriever()
     return len(r.chunk_ids)
 
+async def rebuild_bm25() -> int:
+    """
+    Invalidate and rebuild the shared BM25 index.
+
+    The index is built once at startup (see get_bm25_retriever / warm_bm25) to avoid a
+    per-request full-corpus rebuild that blocked the event loop. The cost of that choice
+    is staleness: the in-memory index does NOT see newly ingested chunks until rebuilt.
+    Call this after any ingestion/reset so the sparse retriever reflects the current
+    Postgres corpus without an app restart. Returns the new chunk count.
+    """
+    global _shared_retriever
+    _shared_retriever = None          # drop the stale index
+    r = await get_bm25_retriever()    # rebuild from the current corpus
+    return len(r.chunk_ids)
+
 
 # --- quick manual test -----------------------------------------------------
 async def _demo():

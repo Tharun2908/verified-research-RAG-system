@@ -111,10 +111,19 @@ async def ingest_corpus(json_path: str, reset: bool = True) -> int:
         await session.commit()
 
         # --- 4. BATCHED Qdrant upserts (~100 points per call) ---
+        # --- 4. BATCHED Qdrant upserts (~100 points per call) ---
         print(f"Upserting {len(points)} vectors to Qdrant...")
         BATCH = 100
         for i in range(0, len(points), BATCH):
             qdrant.upsert(collection_name=COLLECTION_NAME, points=points[i:i + BATCH])
+
+    # --- 5. refresh the in-memory BM25 index so it reflects the new corpus ---
+    # Matters when ingestion is triggered IN-PROCESS (e.g. a future /ingest endpoint):
+    # the server's shared BM25 singleton is stale until rebuilt. When this module is
+    # run as a standalone CLI script, this rebuilds in the script's own process (a
+    # no-op for the server) — in that case, restart the app so startup rebuilds it.
+    from app.services.bm25_retriever import rebuild_bm25
+    await rebuild_bm25()
 
     return len(papers)
 

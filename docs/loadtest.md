@@ -1,17 +1,20 @@
 # Load Test — Application-Layer Bottleneck Analysis (M10A)
 
 Sustained-concurrency load test of the live FastAPI `/verify` pipeline
-(retrieve → generate → extract → verify → persist), run on the laptop against the local app
-(stub generator, so generation latency does not mask application-layer bottlenecks). The goal
-was to find and fix real bottlenecks under load, then demonstrate the result.
+(retrieve → generate → extract → verify → persist), run on the laptop against the local app.
 
-**Test setup:** async load client (`loadtest/loadtest_verify.py`), 64 requests/level, concurrency
-levels 1–32, rotating set of varied questions. Infra (Postgres/Qdrant/Redis) in Docker; FastAPI
-on the host (`fastapi-env`). Models (all-MiniLM embedder + ms-marco cross-encoder) run on **CPU**
-(`torch.cuda.is_available() == False`).
+**Scope — this is deliberately an application/orchestration benchmark, not a model benchmark.**
+Both the generator and the verifier ran as **stubs**: generation used the stub LLM client (canned
+output, no real model call) and verification used `StubVerifier` (lexical overlap), *not* the real
+S2+S4 fusion verifier. This is intentional — stubbing the two model-heavy stages isolates the
+retrieval, async-orchestration, connection-pool, and persistence layers so their bottlenecks are
+visible rather than masked by model latency. The real generator was benchmarked separately on the
+H200 in M9 (`docs/serving.md`); the real S2+S4 verifier was evaluated in batch in M8 (`docs/`).
 
-This characterizes the **application/orchestration layer**. The generation backend was benchmarked
-separately on the H200 in M9 (`docs/serving.md`).
+**Test setup:** async load client (`backend/load_test/loadtest_verify.py`), 64 requests/level,
+concurrency levels 1–32, rotating set of varied questions. Infra (Postgres/Qdrant/Redis) in Docker;
+FastAPI on the host (`fastapi-env`). The retrieval models that *do* run live (all-MiniLM embedder +
+ms-marco cross-encoder reranker) run on **CPU** (`torch.cuda.is_available() == False`).
 
 ---
 
@@ -38,12 +41,25 @@ full-corpus read + tokenize + index construction. Moved it to a FastAPI `lifespa
 pool now exhausted (requests reached persistence simultaneously), throwing
 `QueuePool limit of size 5 overflow 10 reached` 500s at concurrency ≥16.
 
+> **Freshness tradeoff (documented limitation):** building the index once at startup means it goes
+> stale after new documents are ingested — the in-memory sparse index won't include them until it is
+> rebuilt. This is handled by a `rebuild_bm25()` invalidation hook (drops and rebuilds the shared
+> index from the current corpus); call it after ingestion/reset, or restart the app. The per-request
+> rebuild would have kept the index always-fresh but was the bottleneck fixed here — a deliberate
+> freshness-for-throughput trade.
+
 ### Stage 2 fix — DB connection pool + session scoping
 Raised the SQLAlchemy pool (`pool_size=20, max_overflow=30, pool_pre_ping=True`) **and** scoped DB
 sessions tightly: the synchronous cross-encoder rerank now runs **between** two short session
 blocks instead of holding a connection open across the whole pipeline.
-**Result:** errors eliminated (62 → ~0). But throughput **still didn't scale** (0.35 → 0.30 → 0.20
-req/s as concurrency rose) and p99 still climbed to 65 s — the event loop was still being blocked.
+**Result:** the `QueuePool limit reached` failures from Stage 1 were resolved (the pool no longer
+exhausts and connections are released before the rerank). But throughput **still didn't scale**
+(~0.35 → 0.30 → 0.20 req/s as concurrency rose) and p99 still climbed steeply — the event loop was
+still being blocked by the synchronous model calls, which Stage 3 addresses. (The committed
+`loadtest_before.json` and `loadtest_after_bm25.json` capture Stages 0–1; the pool/session change
+was validated interactively against the live server and folded directly into Stage 3, so its
+intermediate run is not separately archived. The Stage 3 scaling artifacts below are the
+load-bearing evidence.)
 
 ### Stage 3 fix — synchronous model work moved off the event loop
 The dense embed (`_embed_model.encode`) and cross-encoder `rerank` are synchronous CPU calls that
@@ -143,6 +159,7 @@ identified as parallel CPU-inference capacity — a hardware boundary addressabl
 models on GPU, exactly as the generation path already is.
 
 ### Artifacts
-`loadtest/loadtest_verify.py` (load client). Raw results (gitignored): `loadtest_before.json`,
-`loadtest_after_bm25.json`, `loadtest_after_pool.json`, `loadtest_pool10.json` (scaling demo),
-`loadtest_pool10_torch2.json`, `loadtest_pool10_torch4.json` (thread-tuning sweep).
+`backend/load_test/loadtest_verify.py` (load client). Raw results (committed in
+`backend/load_test/`): `loadtest_before.json` (Stage 0), `loadtest_after_bm25.json` (Stage 1),
+`loadtest_pool10.json` (Stage 3 scaling demo), `loadtest_pool10_torch2.json` and
+`loadtest_pool10_torch4.json` (intra-op thread-tuning sweep).
