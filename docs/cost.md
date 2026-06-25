@@ -7,8 +7,8 @@ cost per 1,000 answers and answers per GPU-hour.
 This model is **generation-dominated by design** — it uses the LLM generation step (the
 heaviest component) as the cost basis and **excludes retrieval and verification compute**.
 That makes it a clean lower bound on total system cost, with explicit, tunable assumptions
-rather than a single opaque figure. (An interactive version of this calculator was built
-alongside this doc; all inputs below are adjustable there.)
+rather than a single opaque figure. (An interactive version of this calculator is planned as an
+M12 / blog-post artifact; the model and all inputs below stand on their own.)
 
 ---
 

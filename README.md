@@ -1,16 +1,16 @@
 # Verified Research RAG System
 
-A retrieval-augmented research assistant that **measures and reports the grounding of its own answers** — turning hallucination rate from an offline evaluation number into a live production observable. Every answer is decomposed into atomic claims, each claim is checked against its cited evidence by a faithfulness verifier, and unsupported claims are flagged or removed before the answer is delivered.
+A retrieval-augmented research assistant that **measures and reports the grounding of its own answers** — treating hallucination rate as a measurable, monitorable property rather than an afterthought. Every answer is decomposed into atomic claims, each claim is checked against its cited evidence by a faithfulness verifier, and unsupported claims are flagged or removed before the answer is delivered. The verifier is a fine-tuned S2+S4 fusion model, evaluated in batch against an independent LLM judge (results committed); the live API currently runs a lightweight stub verifier for GPU-free reproducibility, with the real verifier's live integration scoped as future work.
 
 Built as a production-scale system: an async FastAPI pipeline (hybrid retrieval → grounded generation → claim extraction → claim-level verification → persistence + Prometheus/Grafana monitoring), benchmarked on an NVIDIA H200 with vLLM, load-tested to find and fix real concurrency bottlenecks, and costed at serving scale.
 
-> Part of a three-project portfolio on LLM safety & reliability: a prior project *trained* a model to reduce hallucinations (prevention), a thesis *built* a verifier to detect them (detection), and this project *deploys* a research assistant that verifies its own claims at serving scale (deployment).
+> Part of a three-project portfolio on LLM safety & reliability: a prior project *trained* a model to reduce hallucinations (prevention), a thesis *built* a verifier to detect them (detection), and this project *builds the deployment system* around that verifier — a research assistant that decomposes and verifies its own claims, benchmarked and load-tested at serving scale (deployment).
 
 ---
 
 ## Highlights
 
-- **Self-verifying RAG pipeline** — answers are claim-decomposed and checked against cited evidence by an S2+S4 faithfulness verifier (a cross-encoder relevance signal fused with a fine-tuned NLI entailment model); the unsupported-claim rate is exposed as a live Prometheus metric.
+- **Self-verifying RAG pipeline** — answers are claim-decomposed and checked against cited evidence by an S2+S4 faithfulness verifier (a cross-encoder relevance signal fused with a fine-tuned NLI entailment model). The verifier was evaluated in batch (committed score/judge artifacts); the live API exposes the unsupported-claim rate as a Prometheus metric and currently runs a stub verifier in that path.
 - **Honest, judge-validated evaluation** — a 43-question / 409-claim study over an arXiv corpus with a three-arm comparison and an independent LLM-as-judge, reporting **measured precision/recall** rather than a self-referential "0% after filtering."
 - **Real serving engineering on an H200** — vLLM benchmark with an fp8-vs-bf16 quantization ablation (**steady +33–39% throughput**) and a prefix-caching ablation that **corrected a benchmarking artifact** (an apparent +46% that was actually ~0% on realistic prompts).
 - **Load-tested and bottleneck-fixed** — drove the live pipeline from collapse under load (62/64 requests failing at 32 concurrent) to clean scaling by diagnosing and fixing three stacked bottlenecks, then correctly identifying the remaining ceiling as a hardware limit.
@@ -52,7 +52,7 @@ Async FastAPI · async SQLAlchemy + Postgres · Qdrant (vectors) · Redis · sen
 
 ### 1. Evaluation — does verification actually work?
 
-A 43-question (36 grounded + 7 out-of-distribution "bait") / 409-claim study over a 250-paper arXiv corpus, using a real Mistral-7B generator and the real S2+S4 verifier, with an independent **Llama-3.3-70B judge** (a different model family, for independence).
+A 43-question (36 grounded + 7 out-of-distribution "bait") / 409-claim study over a 250-paper arXiv corpus, using a real Mistral-7B generator and the real S2+S4 verifier (both run in batch on the cluster), with an independent **Llama-3.3-70B judge** (a different model family, for independence).
 
 | Arm | What changes | Unsupported-claim rate |
 | --- | --- | --- |
@@ -105,7 +105,7 @@ backend/app/
 │   ├── hybrid_search.py          BM25 + dense → RRF → cross-encoder rerank
 │   ├── generator.py              retrieve → grounded prompt → LLM → cited answer
 │   ├── claim_extractor.py        answer → atomic claims + citations
-│   ├── verifier.py               S2+S4 support score + label
+│   ├── verifier.py               verifier interface, S2+S4 labeling logic, stub (live default)
 │   ├── verification_service.py   full verified flow + persistence + metrics
 │   └── generation_client.py      swappable stub / vLLM HTTP client
 └── monitoring/metrics.py         Prometheus metrics
@@ -119,7 +119,7 @@ docker-compose.yml                Postgres, Qdrant, Redis, Prometheus, Grafana
 
 ## Running it locally
 
-The full stack runs locally with **no GPU** (generation uses a stub; the verifier runs on CPU).
+The full stack runs locally with **no GPU**. For GPU-free reproducibility the live `/verify` path uses **stub generation and a stub verifier** (lexical overlap) — so the pipeline, persistence, and monitoring all run end-to-end without a model server. The real Mistral generator (M9) and real S2+S4 verifier (M8) were run separately on the cluster; pointing the app at them is described below and in the docs.
 
 ```bash
 # 1. infra
@@ -141,7 +141,7 @@ To use real generation, point the app at a vLLM server: set `LLM_BASE_URL` to th
 
 ## Design notes & honest limitations
 
-- **The live verifier is the lightweight S2+S4 fusion** (runs on CPU, no GPU needed for the verification step) — this is the load-bearing production path. A higher-accuracy cascade that escalates uncertain claims to a 7B verifier on GPU is a documented benchmark, deliberately *not* in the live path (its tail latency would break the GPU-free demo story).
+- **The verifier: real, evaluated in batch; stub in the live path (for now).** The S2+S4 fusion verifier — lightweight enough to run on CPU — was evaluated offline in batch, and those results (the discrimination, precision/recall, and judge agreement above) are from that real verifier, with committed `scores.json` / `judge_results.json` / `verifier_quality.json` artifacts. The **live `/verify` API endpoint currently uses a stub verifier** (lexical overlap) for GPU-free reproducibility; **wiring the real S2+S4 verifier into the live request path is scoped future work.** A higher-accuracy cascade that escalates uncertain claims to a 7B verifier on GPU is a documented benchmark, deliberately *not* in the live path (its tail latency would break the GPU-free demo).
 - **The verifier is domain-bound.** It was trained on RAGTruth (news/wiki); on scientific abstracts it under-flags. This is measured, explained, and owned — not hidden.
 - **The cost model is generation-only** by design; live verification cost is the largest excluded term and the clear next measurement.
 - Several numbers in this README are *corrected* values — the original prefix-caching gain and the original "0% after filtering" were both replaced after catching an artifact and a circular metric in the project's own results.
