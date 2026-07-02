@@ -1,0 +1,25 @@
+{
+  "protocol": "OOF S4 train scores; RAGTruth train fit; S2+S4 (no metadata)",
+  "s2_norm": {
+    "min": -11.43,
+    "max": 10.641,
+    "source": "M8 notes / train raw range"
+  },
+  "feature_order": [
+    "norm_s2_min_relevance",
+    "signal4_score"
+  ],
+  "coef": [
+    -1.3590096505049223,
+    3.155528234679688
+  ],
+  "intercept": -1.4168645142264542,
+  "threshold": 0.45,
+  "score_convention": "output is P(hallucination); support_score = 1 - P(hallucination)",
+  "sklearn_version": "1.9.0",
+  "n_train": 15090,
+  "test_metrics": {
+    "F1": 0.706472654290015,
+    "AUROC": 0.8494475363204055
+  }
+}
