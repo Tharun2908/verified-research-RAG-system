@@ -1,0 +1,32 @@
+{
+  "input_answers": 160,
+  "input_eval_inputs": 160,
+  "claims_total": 1245,
+  "claims_by_answer_variant": {
+    "plain_answer": 650,
+    "cited_answer": 595
+  },
+  "claims_by_hard_policy": {
+    "home_weak_plus_distractors": 505,
+    "home_weak_1": 448,
+    "remove_strongest": 241,
+    "drop_home_related": 51
+  },
+  "claims_by_template": {
+    "dataset_benchmark": 247,
+    "method_scope": 189,
+    "limitations_ablation": 458,
+    "results_comparison": 351
+  },
+  "claims_by_evidence_scope": {
+    "all_retrieved_evidence_uncited_claim": 910,
+    "cited_evidence": 335
+  },
+  "answer_rows_with_no_claims_count": 0,
+  "answer_rows_with_no_claims_sample": [],
+  "no_evaluated_model_used_for_sampling": true,
+  "notes": [
+    "These are unlabeled claim candidates for Opus-assisted stratified human review.",
+    "ABSTENTION/refusal/meta statements should later be labeled separately and excluded from binary metrics."
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "input_seed_rows": 61,
+  "candidate_inputs_before_cap": 160,
+  "output_inputs": 160,
+  "max_inputs": 160,
+  "seed": 2908,
+  "policy_counts": {
+    "home_weak_plus_distractors": 51,
+    "home_weak_1": 46,
+    "remove_strongest": 50,
+    "drop_home_related": 13
+  },
+  "template_counts": {
+    "dataset_benchmark": 43,
+    "method_scope": 38,
+    "limitations_ablation": 41,
+    "results_comparison": 38
+  },
+  "home_paper_count": 35,
+  "drop_count": 0,
+  "drop_reasons": {},
+  "drops_sample": [],
+  "no_evaluated_model_used_for_sampling": true,
+  "warning": "Questions are templated from protected gold-side paper titles and paired with weakened/censored evidence. This is an enriched stress tranche, not a natural user-query distribution."
+}

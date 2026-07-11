@@ -32,9 +32,16 @@ def build_prompt(question: str, evidence: list[dict]) -> str:
         "You are a research assistant. Answer the question using ONLY the numbered "
         "sources below. Cite the sources you use with their bracketed number, e.g. [1]. "
         "If the sources do not contain the answer, say so explicitly.\n\n"
+        # Format constraint: the downstream verifier scores CLAIMS, extracted by sentence
+        # segmentation. Markdown lists/headers make one "sentence" span several distinct
+        # assertions, which corrupts both the claim text and its citation mapping. Plain
+        # prose keeps one assertion per sentence, which is what the verifier expects.
+        "Write in PLAIN PROSE: complete sentences, no markdown, no numbered or bulleted "
+        "lists, no headings, no bold. Put each distinct factual statement in its own "
+        "sentence, and cite it inline.\n\n"
         f"Sources:\n{sources_block}\n\n"
         f"Question: {question}\n\n"
-        "Answer (with citations):"
+        "Answer (plain prose, with citations):"
     )
 
 

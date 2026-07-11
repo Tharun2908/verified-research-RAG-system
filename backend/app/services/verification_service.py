@@ -29,22 +29,11 @@ from app.db.session import AsyncSessionLocal
 from app.db import models
 from app.services.generator import generate_answer
 from app.services.claim_extractor import extract_claims
-from app.services.verifier import verifier, label_for_score
+from app.services.verifier import get_verifier, label_for_score
+from app.services.evidence_mapping import evidence_text_for_claim as _evidence_text_for_claim
 from app.monitoring import metrics
 
 
-def _evidence_text_for_claim(citations: list[int], evidence: list[dict]) -> str:
-    """
-    Join the text of the evidence items this claim cited.
-    evidence items are dicts {number, title, text}; citations are their numbers.
-    If the claim cited nothing, fall back to ALL evidence (fair-chance policy).
-    """
-    by_number = {e["number"]: e for e in evidence}
-    if citations:
-        chosen = [by_number[c]["text"] for c in citations if c in by_number]
-    else:
-        chosen = [e["text"] for e in evidence]   # uncited -> verify against everything
-    return "\n".join(chosen)
 
 
 async def verify_question(question: str, top_k: int = 5) -> dict:
@@ -68,11 +57,28 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
     metrics.STAGE_LATENCY.labels(stage="extract").observe(time.perf_counter() - extract_start)
 
     # 3: score + label each claim (timed as the "verify" stage)
+    # 3: score + label each claim (timed as the "verify" stage)
+    #
+    # The real verifier is a DeBERTa forward pass per claim: synchronous, ~100s of ms each.
+    # Running that inline would block the event loop for the whole request. So ALL claims are
+    # scored in ONE worker thread — one hop, not N.
     verify_start = time.perf_counter()
+    verifier = get_verifier()
+
+    def _score_all() -> list[float]:
+        """Runs in a worker thread. No event loop, no awaits, no DB."""
+        return [
+            verifier.verify(
+                c["claim_text"],
+                _evidence_text_for_claim(c["citations"], evidence),
+            )
+            for c in claims
+        ]
+
+    scores = await asyncio.to_thread(_score_all) if claims else []
+
     scored_claims = []
-    for c in claims:
-        ev_text = _evidence_text_for_claim(c["citations"], evidence)
-        score = verifier.verify(c["claim_text"], ev_text)
+    for c, score in zip(claims, scores):
         label = label_for_score(score)
         scored_claims.append({
             "claim_text": c["claim_text"],
@@ -83,7 +89,6 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
         metrics.CLAIMS_VERIFIED.inc()
         metrics.CLAIMS_BY_LABEL.labels(label=label).inc()
     metrics.STAGE_LATENCY.labels(stage="verify").observe(time.perf_counter() - verify_start)
-
     # 4: headline metric
     n_claims = len(scored_claims)
     if n_claims == 0:

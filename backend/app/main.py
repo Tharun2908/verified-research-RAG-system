@@ -22,6 +22,8 @@ from app.api.routes_retrieve import router as retrieve_router
 from app.api.routes_research import router as research_router
 from app.api.routes_verify import router as verify_router
 from app.services.bm25_retriever import warm_bm25
+from app.services.verifier import warm_verifier
+from app.services.generation_client import describe_generator
 
 
 @asynccontextmanager
@@ -29,6 +31,14 @@ async def lifespan(app: FastAPI):
     # Build the BM25 index once at startup so no request pays the rebuild cost.
     n = await warm_bm25()
     print(f"[startup] BM25 index built over {n} chunks.")
+
+    # Load the verifier once at startup too. The real verifier loads a ~700MB DeBERTa
+    # checkpoint; doing it lazily would make the first user's request pay for it.
+    # (Set DEV_STUB_VERIFIER=true to use the dev stub instead — it says so, loudly.)
+    kind = await warm_verifier()
+    print(f"[startup] verifier:  {kind}")
+    print(f"[startup] generator: {describe_generator()}")
+
     yield
     # (no teardown needed)
 
@@ -38,13 +48,13 @@ app = FastAPI(title="Verified Research Agent", lifespan=lifespan)
 # plug in the health router and search router
 app.include_router(health_router)
 
-app.include_router(search_router) 
+app.include_router(search_router)
 
-app.include_router(retrieve_router) 
+app.include_router(retrieve_router)
 
-app.include_router(research_router) 
+app.include_router(research_router)
 
-app.include_router(verify_router) 
+app.include_router(verify_router)
 
 # mount the Prometheus /metrics endpoint
 metrics_app = make_asgi_app()

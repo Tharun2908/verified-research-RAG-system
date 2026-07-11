@@ -1,0 +1,77 @@
+{
+  "input_md": "grounded_hard_random_review.md",
+  "input_jsonl": "grounded_hard_random_review.jsonl",
+  "output_jsonl": "grounded_hard_random_review_labeled.jsonl",
+  "rows_total": 150,
+  "label_counts_raw": {
+    "ABSTENTION": 39,
+    "UNSUPPORTED": 15,
+    "SUPPORTED": 86,
+    "INVALID_EXTRACTION": 10
+  },
+  "label_counts_weighted": {
+    "ABSTENTION": 297.6083,
+    "INVALID_EXTRACTION": 86.8286,
+    "SUPPORTED": 735.6536,
+    "UNSUPPORTED": 124.9095
+  },
+  "binary_rows_raw": 101,
+  "binary_label_counts_raw": {
+    "UNSUPPORTED": 15,
+    "SUPPORTED": 86
+  },
+  "binary_label_counts_weighted": {
+    "SUPPORTED": 735.6536,
+    "UNSUPPORTED": 124.9095
+  },
+  "by_stratum_raw": {
+    "drop_home_related::cited_answer": {
+      "ABSTENTION": 4,
+      "UNSUPPORTED": 1,
+      "SUPPORTED": 1
+    },
+    "drop_home_related::plain_answer": {
+      "ABSTENTION": 5,
+      "SUPPORTED": 1
+    },
+    "home_weak_1::cited_answer": {
+      "SUPPORTED": 17,
+      "ABSTENTION": 1,
+      "INVALID_EXTRACTION": 2,
+      "UNSUPPORTED": 4
+    },
+    "home_weak_1::plain_answer": {
+      "ABSTENTION": 3,
+      "UNSUPPORTED": 2,
+      "SUPPORTED": 22,
+      "INVALID_EXTRACTION": 1
+    },
+    "home_weak_plus_distractors::cited_answer": {
+      "SUPPORTED": 19,
+      "ABSTENTION": 3,
+      "UNSUPPORTED": 2,
+      "INVALID_EXTRACTION": 4
+    },
+    "home_weak_plus_distractors::plain_answer": {
+      "UNSUPPORTED": 3,
+      "SUPPORTED": 23,
+      "INVALID_EXTRACTION": 2,
+      "ABSTENTION": 2
+    },
+    "remove_strongest::cited_answer": {
+      "ABSTENTION": 8,
+      "UNSUPPORTED": 3,
+      "SUPPORTED": 3
+    },
+    "remove_strongest::plain_answer": {
+      "ABSTENTION": 13,
+      "INVALID_EXTRACTION": 1
+    }
+  },
+  "blank_labels": 0,
+  "notes": [
+    "ABSTENTION should be excluded from binary metrics and reported separately.",
+    "Use sampling_weight for weighted tranche metrics.",
+    "No evaluated model was used for sampling."
+  ]
+}

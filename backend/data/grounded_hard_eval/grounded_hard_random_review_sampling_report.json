@@ -1,0 +1,97 @@
+{
+  "input_claims": 1245,
+  "target_n": 150,
+  "selected_n": 150,
+  "seed": 2908,
+  "sampling_protocol": "stratified_random_by_hard_policy_and_answer_variant",
+  "stratum_stats": {
+    "drop_home_related::cited_answer": {
+      "N": 25,
+      "n": 6,
+      "sampling_weight": 4.166666666666667,
+      "hard_policy": "drop_home_related",
+      "answer_variant": "cited_answer"
+    },
+    "drop_home_related::plain_answer": {
+      "N": 26,
+      "n": 6,
+      "sampling_weight": 4.333333333333333,
+      "hard_policy": "drop_home_related",
+      "answer_variant": "plain_answer"
+    },
+    "home_weak_1::cited_answer": {
+      "N": 207,
+      "n": 24,
+      "sampling_weight": 8.625,
+      "hard_policy": "home_weak_1",
+      "answer_variant": "cited_answer"
+    },
+    "home_weak_1::plain_answer": {
+      "N": 241,
+      "n": 28,
+      "sampling_weight": 8.607142857142858,
+      "hard_policy": "home_weak_1",
+      "answer_variant": "plain_answer"
+    },
+    "home_weak_plus_distractors::cited_answer": {
+      "N": 244,
+      "n": 28,
+      "sampling_weight": 8.714285714285714,
+      "hard_policy": "home_weak_plus_distractors",
+      "answer_variant": "cited_answer"
+    },
+    "home_weak_plus_distractors::plain_answer": {
+      "N": 261,
+      "n": 30,
+      "sampling_weight": 8.7,
+      "hard_policy": "home_weak_plus_distractors",
+      "answer_variant": "plain_answer"
+    },
+    "remove_strongest::cited_answer": {
+      "N": 119,
+      "n": 14,
+      "sampling_weight": 8.5,
+      "hard_policy": "remove_strongest",
+      "answer_variant": "cited_answer"
+    },
+    "remove_strongest::plain_answer": {
+      "N": 122,
+      "n": 14,
+      "sampling_weight": 8.714285714285714,
+      "hard_policy": "remove_strongest",
+      "answer_variant": "plain_answer"
+    }
+  },
+  "selected_by_stratum": {
+    "remove_strongest::plain_answer": 14,
+    "home_weak_plus_distractors::plain_answer": 30,
+    "drop_home_related::cited_answer": 6,
+    "home_weak_1::cited_answer": 24,
+    "home_weak_plus_distractors::cited_answer": 28,
+    "remove_strongest::cited_answer": 14,
+    "drop_home_related::plain_answer": 6,
+    "home_weak_1::plain_answer": 28
+  },
+  "selected_by_hard_policy": {
+    "remove_strongest": 28,
+    "home_weak_plus_distractors": 58,
+    "drop_home_related": 12,
+    "home_weak_1": 52
+  },
+  "selected_by_answer_variant": {
+    "plain_answer": 78,
+    "cited_answer": 72
+  },
+  "selected_by_evidence_scope": {
+    "all_retrieved_evidence_uncited_claim": 121,
+    "cited_evidence": 29
+  },
+  "evaluated_models_used_for_sampling": false,
+  "drafter_model_used_for_sampling": false,
+  "notes": [
+    "This sample is independent of S2/S4/fusion predictions.",
+    "Human labels are final.",
+    "Weighted metrics should use sampling_weight to estimate the full grounded-hard claim pool.",
+    "ABSTENTION rows should be excluded from binary supported-vs-unsupported metrics and reported separately."
+  ]
+}

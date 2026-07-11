@@ -1,0 +1,26 @@
+{
+  "inputs": {
+    "claims": "data\\distill_arxiv_v2\\train_claims.json",
+    "protected": "data\\distill_arxiv_v2\\protected_gold_evidence_papers.json"
+  },
+  "outputs": {
+    "report": "data\\distill_arxiv_v2\\train_protected_evidence_overlap_report.json",
+    "clean_claims": "data\\distill_arxiv_v2\\train_claims_no_protected_overlap.json"
+  },
+  "summary": {
+    "train_claims": 2227,
+    "protected_gold_evidence_papers": 99,
+    "evidence_items_checked": 11794,
+    "claims_with_protected_overlap": 0,
+    "clean_claims": 2227,
+    "missing_pid_evidence_items": 0,
+    "strict_pass": true
+  },
+  "by_train_source": {},
+  "by_answer_variant": {},
+  "by_overlap_source_field": {},
+  "protected_pid_hits_top30": {},
+  "protected_title_hits_top30": {},
+  "bad_claims_preview": [],
+  "missing_pid_evidence_preview": []
+}

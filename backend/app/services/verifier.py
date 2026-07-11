@@ -1,42 +1,40 @@
 """
 backend/app/services/verifier.py
 
-M6 verification interface + stub implementation.
+Verification interface + verifier selection.
 
-The real verifier is the thesis S2+S4 logistic-regression fusion (see cluster:
-/workspace/fusion_logreg_s2s4.py, signal4_model/). Per the project's environment-isolation
-rule, the real verifier runs in its OWN pinned environment (transformers==4.44.0) and is
-swapped in later; it must NOT contaminate fastapi-env. So here we:
+The DEPLOYED verifier is the SciFact/HealthVer-adapted DeBERTa (see verifier_real.py and
+docs/verifier.md). It is the DEFAULT. The StubVerifier is a lexical-overlap placeholder for
+local development only, and must be opted into EXPLICITLY:
 
-  - define the clean interface the rest of the system depends on:
-        verify(claim_text, evidence_text) -> support_score in [0, 1]   (higher = more supported)
-  - provide a STUB implementation for local dev (no model, no GPU, no transformers pin)
-  - provide the label mapping (thesis thresholds), used regardless of which verifier is active
+    DEV_STUB_VERIFIER=true
 
-When the real verifier is wired in (its own service/env), it satisfies the same `verify`
-signature; nothing downstream changes. Same swappable pattern as the generation client.
+This is deliberate. An earlier version of this repo defaulted to the stub while the README
+implied real verification — producing convincing-looking but meaningless grounding labels.
+Real-by-default, loud-warning-on-stub prevents that class of mistake.
 
-Thesis facts the REAL implementation will use (NOT needed by the stub):
-  S2 = cross-encoder/ms-marco-MiniLM-L-6-v2, min-aggregated, normalized with
-       S2_MIN=-11.430, S2_MAX=10.641 ; norm_s2 = clamp01((raw_min - S2_MIN)/(S2_MAX - S2_MIN))
-  S4 = fine-tuned nli-deberta-v3-base (signal4_model/), transformers==4.44.0,
-       ignore_mismatched_sizes=True, input "answer [SEP] context", higher = more hallucination
-  Fusion = logistic regression over [norm_s2_min, s4_score, task_onehot, model_onehot]
-  Output = support probability in [0,1]  (this interface's contract)
+Contract (unchanged, both implementations satisfy it):
+    verify(claim_text, evidence_text) -> support_score in [0, 1]   (higher = more supported)
+
+Label bands (support_score):
+    >= 0.70  Supported     (green)
+    0.45-0.69 Weak         (amber)
+    <  0.45  Unsupported   (red)
 """
 
 from __future__ import annotations
 
+import asyncio
+import os
 import re
 
-# --- label thresholds (thesis) ---------------------------------------------
-# support_score in [0,1], higher = more supported.
-SUPPORTED_THRESHOLD = 0.70   # >= 0.70 -> Supported (green)
-WEAK_THRESHOLD = 0.45        # 0.45-0.69 -> Weak (amber); < 0.45 -> Unsupported (red)
+# --- label thresholds -------------------------------------------------------
+SUPPORTED_THRESHOLD = 0.70
+WEAK_THRESHOLD = 0.45
 
 
 def label_for_score(score: float) -> str:
-    """Map a support score to a label using the thesis thresholds."""
+    """Map a support score to a label."""
     if score >= SUPPORTED_THRESHOLD:
         return "Supported"
     if score >= WEAK_THRESHOLD:
@@ -46,9 +44,7 @@ def label_for_score(score: float) -> str:
 
 # --- verifier interface -----------------------------------------------------
 class Verifier:
-    """
-    Base interface. Real and stub verifiers both implement `verify`.
-    """
+    """Base interface. Real and stub verifiers both implement `verify`."""
 
     def verify(self, claim_text: str, evidence_text: str) -> float:
         raise NotImplementedError
@@ -56,46 +52,65 @@ class Verifier:
 
 class StubVerifier(Verifier):
     """
-    Placeholder verifier for local dev. Returns a deterministic, VARIED support score
-    based on lexical overlap between claim and evidence (a weak proxy for support, so
-    test output shows a realistic mix of labels). NOT the real verifier — no S2/S4, no model.
+    DEV ONLY. Lexical-overlap placeholder — NOT a real verifier. Produces varied-looking
+    scores so the pipeline can be exercised without loading a model, but the scores are
+    scientifically meaningless. Requires DEV_STUB_VERIFIER=true to be selected.
     """
 
     def verify(self, claim_text: str, evidence_text: str) -> float:
         if not evidence_text:
-            return 0.0   # no evidence to support against
-
+            return 0.0
         claim_tokens = set(re.findall(r"\w+", claim_text.lower()))
         evid_tokens = set(re.findall(r"\w+", evidence_text.lower()))
         if not claim_tokens:
             return 0.0
-
-        # fraction of claim words that appear in the evidence (Jaccard-ish, claim-weighted)
         overlap = len(claim_tokens & evid_tokens) / len(claim_tokens)
-
-        # squash a bit so pure-overlap=1.0 maps near (but not exactly) 1, and add a small
-        # floor so partial overlaps land in the Weak band rather than collapsing to 0.
-        score = 0.15 + 0.80 * overlap
-        return max(0.0, min(1.0, score))
+        return max(0.0, min(1.0, 0.15 + 0.80 * overlap))
 
 
-# Active verifier for the app. Swap this line to the real verifier later (in its own env).
-verifier: Verifier = StubVerifier()
+# --- selection --------------------------------------------------------------
+_verifier: Verifier | None = None
 
 
-def _demo():
-    pairs = [
-        ("RAG combines retrieval with generation.",
-         "We introduce retrieval-augmented generation, combining parametric and non-parametric memory."),
-        ("RAG was invented in 1995 by a secret lab.",
-         "We introduce retrieval-augmented generation, combining parametric and non-parametric memory."),
-        ("Cross-encoders rerank passages.",
-         "Passage reranking with BERT cross-encoders improves retrieval quality over first-stage retrievers."),
-    ]
-    for claim, evidence in pairs:
-        s = verifier.verify(claim, evidence)
-        print(f"score={s:.3f}  label={label_for_score(s):<11}  claim={claim!r}")
+def _use_stub() -> bool:
+    return os.getenv("DEV_STUB_VERIFIER", "").strip().lower() in {"1", "true", "yes"}
 
 
-if __name__ == "__main__":
-    _demo()
+def get_verifier() -> Verifier:
+    """
+    Return the process-wide verifier singleton, constructing it on first use.
+
+    Default: RealVerifier (fine-tuned DeBERTa; loads a ~700MB checkpoint once).
+    Stub: only when DEV_STUB_VERIFIER is explicitly set — and it says so, loudly.
+    """
+    global _verifier
+    if _verifier is None:
+        if _use_stub():
+            print(
+                "\n" + "!" * 78 + "\n"
+                "!! DEV_STUB_VERIFIER=true -> using StubVerifier (lexical overlap).\n"
+                "!! Grounding scores are NOT real. Unset DEV_STUB_VERIFIER for the\n"
+                "!! fine-tuned verifier.\n"
+                + "!" * 78 + "\n"
+            )
+            _verifier = StubVerifier()
+        else:
+            # imported lazily so the stub path never pays the torch/transformers import
+            from app.services.verifier_real import RealVerifier
+            _verifier = RealVerifier()
+    return _verifier
+
+
+async def warm_verifier() -> str:
+    """
+    Load the verifier at STARTUP (lifespan), not on the first request — model loading is
+    seconds of blocking work and must not land on a user's request. Returns the class name.
+    """
+    v = await asyncio.to_thread(get_verifier)
+    return type(v).__name__
+
+
+def reset_verifier_for_tests() -> None:
+    """Clear the singleton (tests only)."""
+    global _verifier
+    _verifier = None
