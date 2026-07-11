@@ -1,32 +1,50 @@
-# `backend/data/` — committed result artifacts
+# Evaluation artifacts
 
-This folder holds the evaluation and benchmark artifacts for the Verified Research RAG System.
-Most of the folder is gitignored (bulk corpus + large regenerable intermediates); the files
-committed here are the **small specs and final results** that let you verify the reported numbers
-without re-running the full pipeline.
+Committed so the reported numbers can be independently recomputed.
 
-## Committed files
+## Corpus
+- `arxiv_papers.json` — the 250-paper corpus (title, authors, year, abstract). Ingested by
+  `app.services.ingest_corpus`. One abstract = one chunk.
 
-| File | What it is | Produced by |
-| --- | --- | --- |
-| `eval_questions.json` | The 43-question evaluation spec (36 grounded + 7 out-of-distribution "bait"), each validated against retrieval. | hand-built + validated (M8 step 1) |
-| `scores.json` | Per-claim verifier output for all 409 extracted claims: S2/S4 sub-scores, fused hallucination probability, support score, and label (Supported/Weak/Unsupported). | `cluster/verify_batch.py` (real S2+S4 fusion) |
-| `judge_results.json` | Independent LLM-as-judge verdict (SUPPORTED/UNSUPPORTED) for each claim, with the verifier's own label alongside, for agreement analysis. | `app/services/gemini_judge.py` (Llama-3.3-70B via OpenRouter, 2026-06-21) |
-| `eval_report.json` | Three-arm comparison results (Basic RAG / RAG+citations / Verified) and the grounded-vs-bait unsupported-rate breakdown. | `app/services/analyze_eval.py` |
-| `verifier_quality.json` | Verifier graded against the independent judge: removal precision, recall, F1, supported-claim loss, retained-unsupported-rate. Replaces the circular "~0% after filtering" metric. | `app/services/analyze_verifier_quality.py` |
-| `bench_bf16_prefix_unique.json` | M9 serving benchmark — bf16 + prefix caching, unique-prompt RAG workload. | `cluster/bench_vllm.py` |
-| `bench_fp8_prefix_unique.json` | M9 serving benchmark — fp8 + prefix caching. | `cluster/bench_vllm.py` |
-| `bench_fp8_noprefix_unique.json` | M9 serving benchmark — fp8, prefix caching disabled (for the prefix-caching ablation). | `cluster/bench_vllm.py` |
+## M8 evaluation (43 questions / 409 claims)
+- `eval_questions.json` — the questions (`type: grounded | bait`)
+- `answers.json` — generated answers (plain + cited arms)
+- `claims_to_verify.json` — extracted claims with their evidence
+- `scores.json` — verifier scores (S2, S4, fusion, label)
+- `judge_results.json` — independent LLM-judge verdicts
+- `verifier_quality.json`, `eval_report.json` — computed metrics
 
-## How to reproduce the headline numbers from these files
+## Serving benchmarks (vLLM, H200)
+- `bench_bf16_prefix_unique.json`, `bench_fp8_prefix_unique.json`,
+  `bench_fp8_noprefix_unique.json` — the corrected unique-prompt runs. (The earlier
+  `*_varied` files contain the run whose "+46% prefix caching" turned out to be an artifact
+  of accidentally repeated prompts; kept for provenance.)
 
-- **Three-arm eval + grounded-vs-bait split:** `python -m app.services.analyze_eval` (reads `scores.json` + `eval_questions.json` → `eval_report.json`).
-- **Verifier quality vs judge:** `python -m app.services.analyze_verifier_quality` (reads `judge_results.json` → `verifier_quality.json`).
-- **Serving benchmark tables:** see `docs/serving.md`; raw per-level numbers are in the three `bench_*_unique.json` files.
+## Grounded-hard evaluation (`grounded_hard_eval/`)
+The headline model comparison in `docs/verifier.md`.
+- `grounded_hard_random_review_labeled.jsonl` — **the human labels** (the gold standard)
+- `grounded_hard_random_review_sampling_report.json` — how the sample was drawn
+- `binary_predictions.jsonl` — per-model predictions on the human-reviewed claims
+- `abstention_rows.jsonl` — the abstention subset
+- `metrics_summary.json` — the computed comparison table
+- `bootstrap_summary.json` — question-clustered bootstrap CIs
+- `fusion_ft_scifact_oof_hard_predictions.jsonl` — OOF-fusion per-claim predictions
+- `fusion_base_scifact_trainfit_hard_predictions.jsonl` — train-fitted fusion predictions
+- `fold_assignments.jsonl` — the question-grouped OOF folds
+- `oof_fusion_metrics_summary.json` — fusion metrics
 
-## NOT committed (gitignored — regenerable bulk data)
+**Reproducibility.** The OOF-fusion predictions (fusion_ft_scifact_oof_hard_predictions.jsonl), the train-fitted fusion predictions, the fold assignments, and the human labels are all committed — so the reported −0.074 weighted-F1 difference (95% CI [−0.131, −0.018]) can be recomputed with verifier_study/3_gold_and_eval/bootstrap_grounded_hard_clustered.py.
 
-- `arxiv_papers.json` — the 250-paper corpus (re-fetch from arXiv).
-- `eval_inputs.json`, `answers.json`, `claims_to_verify.json` — large intermediate pipeline files, regenerable from the questions + corpus + the `build_*` / `generate_batch` scripts.
+## Distillation (`distill_arxiv/`, `distill_arxiv_v2/`)
+Selected reports from the arXiv distillation study (see `docs/verifier.md`):
+- `distill_arxiv/evidence_overlap_report.json` — the audit that found 96% contamination
+- `distill_arxiv/gold_final_human_reviewed.json` — the human-reviewed gold set
+- `distill_arxiv_v2/safe_paper_report.json`, `protected_gold_evidence_papers.json` — the
+  protected-paper split
+- `distill_arxiv_v2/train_protected_evidence_overlap_report.json` — the 0-overlap verification
+- `distill_arxiv_v2/.../metrics_summary.json` — fine-tune metrics
 
-A full corpus manifest (arXiv IDs + checksums) and end-to-end reproduction commands are planned for the M12 documentation pass.
+## Not committed
+- Model checkpoints → [HuggingFace](https://huggingface.co/Primeinvincible/scifact-healthver-verifier)
+- The full 1,245-claim generation pool (11MB) and raw bootstrap replicates (11MB) — the
+  human-reviewed subset and the summaries are here instead.

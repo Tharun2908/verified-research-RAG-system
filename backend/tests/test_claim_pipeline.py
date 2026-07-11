@@ -15,14 +15,18 @@ from __future__ import annotations
 
 import pytest
 
+# NOTE: these imports are deliberately PURE — no database, no models, no network.
+# `verification_service` is NOT imported: it eagerly constructs a SQLAlchemy engine and
+# loads two SentenceTransformer models at import time, which would make this suite depend
+# on a running Postgres and ~100MB of downloads to test a dict-to-string function.
 from app.services.claim_extractor import extract_claims
+from app.services.evidence_mapping import evidence_text_for_claim as _evidence_text_for_claim
 from app.services.verifier import (
     StubVerifier,
     label_for_score,
     SUPPORTED_THRESHOLD,
     WEAK_THRESHOLD,
 )
-from app.services.verification_service import _evidence_text_for_claim
 
 
 # ---------------------------------------------------------------- label bands

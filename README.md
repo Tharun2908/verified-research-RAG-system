@@ -103,23 +103,32 @@ ECE                                       0.058  →   0.19     ← calibration 
 
 ## Running it
 
-Requires Docker, Python 3.10+, and an `OPENROUTER_API_KEY` for generation.
+Requires Docker and Python 3.10+. Generation needs an `OPENROUTER_API_KEY`
+([get one](https://openrouter.ai/keys) — queries cost fractions of a cent).
 
 ```bash
+# from the repository root
+cp .env.example backend/.env      # then add your OPENROUTER_API_KEY
+docker compose up -d              # Postgres, Qdrant, Redis, Prometheus, Grafana
+
 cd backend
 pip install -r requirements.txt
-cp .env.example .env          # add OPENROUTER_API_KEY
 
-docker compose up -d          # Postgres, Qdrant, Redis
-python -m app.db.init_db      # create tables + Qdrant collection
-python -m app.services.ingest_corpus   # ingest the 250-paper corpus (committed)
+python -m app.db.init_db                # create tables + Qdrant collection
+python -m app.services.ingest_corpus    # ingest the 250-paper corpus (committed)
 
 uvicorn app.main:app --reload
 ```
 
-Startup prints which components are live — there is no silent degradation:
+The verifier checkpoint (~700MB) is **not** in the repo — it is pulled from
+[HuggingFace](https://huggingface.co/Primeinvincible/scifact-healthver-verifier) on first
+startup and cached. No manual download.
+
+Startup prints which components are live. There is **no silent degradation**:
 
 ```
+[verifier] loading Primeinvincible/scifact-healthver-verifier (HuggingFace Hub) ...
+[verifier] ready on cpu.
 [startup] BM25 index built over 250 chunks.
 [startup] verifier:  RealVerifier
 [startup] generator: OpenRouterClient
@@ -131,12 +140,16 @@ Then:
 curl "http://localhost:8000/verify?q=How+can+hallucinations+be+detected+without+a+source+document&top_k=4"
 ```
 
-Returns the answer, every extracted claim with its citations, its support score and label, and the unsupported-claim rate.
+Returns the answer, every extracted claim with its citations, support score and label, and
+the unsupported-claim rate. If generation is unavailable, the endpoint returns **503** — it
+does not return a fabricated "verified" result.
 
-**Degraded modes are explicit and loud.** Without `OPENROUTER_API_KEY`, generation falls back to a stub and prints a wall of warnings. `DEV_STUB_VERIFIER=true` swaps in a lexical-overlap stub for model-free development — and says so. Both defaults are *real*; you have to opt out.
+**Degraded modes are explicit.** Without `OPENROUTER_API_KEY`, generation falls back to a
+stub and prints a wall of warnings. `DEV_STUB_VERIFIER=true` swaps in a lexical-overlap stub
+for model-free development — and says so. Both defaults are *real*; you have to opt out.
 
 ```bash
-pytest tests/ -v    # 37 tests: extraction, citation mapping, label bands, rate maths
+pytest tests/ -v    # 37 tests. No database or models required — pure-logic core only.
 ```
 
 ---
@@ -171,7 +184,16 @@ docs/
   cost.md                 capacity + cost model
 ```
 
-**On `demo/`.** The Space re-implements the pipeline with an in-process index (numpy + BM25 over 250 abstracts) instead of Postgres and Qdrant, because a free CPU Space cannot run them. It is the same retrieval design (BM25 + dense → RRF → rerank), the same extractor logic, and the same verifier checkpoint — a deliberate second target, not a fork. The duplication is the cost of a free, always-on public demo.
+**On `demo/`.** The Space re-implements the pipeline with an in-process index (numpy + BM25
+over the 250 abstracts) instead of Postgres and Qdrant, because a free CPU Space cannot run
+them. It uses the same retrieval design (BM25 + dense → RRF → cross-encoder rerank) and the
+same verifier checkpoint.
+
+The two extractors have **partially diverged**: the demo has abstention detection (which the
+backend lacks) and the backend has structural list/block segmentation (which the demo lacks).
+Both are fixes to real, separately-observed failures; neither has been ported across yet.
+This is a known duplication cost of maintaining a second, dependency-free target, and it is
+the first thing to consolidate.
 
 ---
 

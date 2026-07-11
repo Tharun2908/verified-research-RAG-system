@@ -3,23 +3,26 @@ backend/app/services/generation_client.py
 
 Generation backend, swappable behind one interface:
 
-    generate(prompt: str) -> str
+    generate(prompt: str) -> str          raises GenerationError on total failure
 
-Selection (same real-by-default policy as the verifier):
+Selection (real-by-default, same policy as the verifier):
 
-    OpenRouterClient   DEFAULT when OPENROUTER_API_KEY is set. Calls a hosted LLM.
-    StubGenerator      Fallback when no key is present, or when DEV_STUB_GENERATOR=true.
-                       Returns placeholder text and SAYS SO, loudly, at startup.
+    OpenRouterClient   DEFAULT when OPENROUTER_API_KEY is set.
+    StubGenerator      Only when no key is present, or DEV_STUB_GENERATOR=true — and it
+                       SAYS SO, loudly, at startup.
 
-An earlier version of this repo defaulted silently to the stub while the README described a
-real pipeline. Real-by-default with a loud warning on degradation prevents that.
+FAILURE IS AN EXCEPTION, NOT A STRING. An earlier version returned an error *sentence* when
+every upstream model failed. The pipeline then extracted "claims" from that sentence, scored
+them with the verifier, and reported verification_status="verified" — a fabricated
+verification result, in a system whose entire purpose is not to fabricate. A generation
+outage must be a typed failure that skips verification entirely.
 
 The call is I/O-bound (an HTTPS request), so it is genuinely async and belongs ON the event
-loop — unlike the verifier, whose CPU-bound torch forward pass is pushed to a worker thread.
+loop — unlike the verifier, whose CPU-bound forward pass is pushed to a worker thread.
 
-Model fallback chain: the first model that responds wins. A single upstream rate-limit or a
-delisted model should not take the endpoint down. (Mistral-7B, used for the offline
-evaluation, is no longer served by any OpenRouter provider — hence the chain.)
+Model fallback chain: the first model that responds wins. One rate-limit or a delisted model
+should not take the endpoint down. (Mistral-7B, used for the offline evaluation, is no longer
+served by any OpenRouter provider — hence the chain.)
 """
 
 from __future__ import annotations
@@ -36,7 +39,6 @@ except ImportError:
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-# Tried in order; first success wins.
 GEN_MODELS = [
     "mistralai/ministral-8b-2512",               # primary: cheap, reliable, Mistral family
     "mistralai/mistral-small-3.2-24b-instruct",  # fallback: stronger, still cheap
@@ -45,6 +47,15 @@ GEN_MODELS = [
 
 TIMEOUT_S = 90.0
 TEMPERATURE = 0.2
+
+
+class GenerationError(RuntimeError):
+    """
+    Generation failed for every configured model.
+
+    Raised, not returned — so no downstream stage can mistake an outage for an answer and
+    "verify" it.
+    """
 
 
 class GenerationClient:
@@ -59,13 +70,14 @@ class OpenRouterClient(GenerationClient):
 
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
+        self.last_model: str | None = None
 
     async def generate(self, prompt: str) -> str:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
-        last_err = None
+        errors: list[str] = []
 
         async with httpx.AsyncClient(timeout=TIMEOUT_S) as client:
             for model in GEN_MODELS:
@@ -80,32 +92,33 @@ class OpenRouterClient(GenerationClient):
                         },
                     )
                     if r.status_code == 200:
+                        self.last_model = model
                         return r.json()["choices"][0]["message"]["content"].strip()
-                    last_err = f"HTTP {r.status_code} from {model}"
-                except Exception as e:  # network error, timeout, malformed response
-                    last_err = f"{type(e).__name__} from {model}"
+                    errors.append(f"{model}: HTTP {r.status_code}")
+                except Exception as e:
+                    errors.append(f"{model}: {type(e).__name__}")
 
-        # Every model failed. Return a clear message rather than raising — the caller still
-        # has real retrieval results to show, and the verifier must NOT be handed an error
-        # string to score (verification_service treats this as an ordinary answer, so keep
-        # it short and honest).
-        return f"The generation service is currently unavailable ({last_err})."
+        raise GenerationError(
+            "all generation models failed — " + "; ".join(errors)
+        )
 
 
 class StubGenerator(GenerationClient):
     """
-    DEV ONLY. Placeholder text — NOT a real answer. Used when no OPENROUTER_API_KEY is set,
-    or when DEV_STUB_GENERATOR=true. Any grounding scores computed over this text are
-    meaningless.
+    DEV ONLY. Placeholder text — NOT a real answer. Selected when no OPENROUTER_API_KEY is
+    set, or DEV_STUB_GENERATOR=true. Grounding scores over this text are meaningless.
     """
+
+    def __init__(self) -> None:
+        self.last_model = "stub"
 
     async def generate(self, prompt: str) -> str:
         return (
             "[STUB ANSWER] Based on the retrieved evidence, the topic in question is "
             "addressed by the provided sources [1] [2] [3]. The first source establishes "
             "the core finding [1], and additional sources provide supporting context. "
-            "(This is placeholder text from the stub generator; set OPENROUTER_API_KEY "
-            "for real generation.)"
+            "(Placeholder text from the stub generator; set OPENROUTER_API_KEY for real "
+            "generation.)"
         )
 
 
@@ -126,7 +139,7 @@ def _build_client() -> GenerationClient:
         print(
             "\n" + "!" * 78 + "\n"
             f"!! Generation is STUBBED ({reason}).\n"
-            "!! Answers are placeholder text and grounding scores over them are meaningless.\n"
+            "!! Answers are placeholder text; grounding scores over them are MEANINGLESS.\n"
             "!! Set OPENROUTER_API_KEY in .env for real generation.\n"
             + "!" * 78 + "\n"
         )
@@ -134,7 +147,6 @@ def _build_client() -> GenerationClient:
     return OpenRouterClient(os.environ["OPENROUTER_API_KEY"])
 
 
-# The active client. `generator.py` imports this and calls `.generate(prompt)`.
 generation_client: GenerationClient = _build_client()
 
 
@@ -145,13 +157,15 @@ def describe_generator() -> str:
 
 async def _demo():
     print(f"generator: {describe_generator()}")
-    out = await generation_client.generate(
-        "You are a research assistant. Answer using ONLY the numbered sources, citing "
-        "with [n].\n\nSources:\n[1] Retrieval-augmented generation combines a parametric "
-        "generator with a non-parametric retriever.\n\nQuestion: What is RAG?\n\n"
-        "Answer (with citations):"
-    )
-    print("\n" + out)
+    try:
+        out = await generation_client.generate(
+            "Answer using ONLY the numbered sources, citing with [n].\n\n"
+            "Sources:\n[1] Retrieval-augmented generation combines a parametric generator "
+            "with a non-parametric retriever.\n\nQuestion: What is RAG?\n\nAnswer:"
+        )
+        print("\n" + out)
+    except GenerationError as e:
+        print(f"\nGENERATION FAILED: {e}")
 
 
 if __name__ == "__main__":

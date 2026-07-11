@@ -32,6 +32,7 @@ from app.services.claim_extractor import extract_claims
 from app.services.verifier import get_verifier, label_for_score
 from app.services.evidence_mapping import evidence_text_for_claim as _evidence_text_for_claim
 from app.monitoring import metrics
+from app.services.generation_client import GenerationError
 
 
 
@@ -45,11 +46,34 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
     request_start = time.perf_counter()
 
     # 1: generate (retrieve happens inside generate_answer)
+    #
+    # If generation FAILS, we must not proceed. An earlier version returned the upstream
+    # error as an answer string; the pipeline then extracted "claims" from the error message,
+    # scored them, and reported verification_status="verified" — a fabricated verification
+    # result. A generation outage is a failure, and is reported as one.
     gen_start = time.perf_counter()
-    gen = await generate_answer(question, top_k=top_k)
+    try:
+        gen = await generate_answer(question, top_k=top_k)
+    except GenerationError as e:
+        metrics.STAGE_LATENCY.labels(stage="generate").observe(
+            time.perf_counter() - gen_start
+        )
+        metrics.REQUEST_LATENCY.observe(time.perf_counter() - request_start)
+        return {
+            "job_id": None,
+            "question": question,
+            "answer": None,
+            "verification_status": "generation_failed",
+            "error": str(e),
+            "n_claims": 0,
+            "n_unsupported": 0,
+            "unsupported_claim_rate": None,
+            "grounding_score": None,
+            "claims": [],
+        }
     metrics.STAGE_LATENCY.labels(stage="generate").observe(time.perf_counter() - gen_start)
     answer = gen["answer"]
-    evidence = gen["evidence"]   # [{number, title, text}]
+    evidence = gen["evidence"]   # [{number, title, text, chunk_id}]
 
     # 2: extract claims
     extract_start = time.perf_counter()
