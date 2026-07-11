@@ -2,3 +2,6 @@ app/services/verifier_model/signal4_model/
 app/services/verifier_model/*.tar.gz
 app/services/verifier_model/signal4_model_scifact_healthver/
 app/services/verifier_model/*.tar.gz
+backend/app/services/verifier_model/signal4_model*/
+backend/app/services/verifier_model/*.tar.gz*
+backend/verified-research-rag/

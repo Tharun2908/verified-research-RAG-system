@@ -1,0 +1,88 @@
+{
+  "protocol": "SciFact+HealthVer side-project verifier; custom source-stratified grouped split; no claim_id or abstract_id overlap across train/val/test; fusion fit on grouped train; threshold tuned on grouped val; test evaluated once",
+  "s2_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+  "s2_feature": "raw_min_relevance: split claim/evidence into sentences; for each claim sentence, score against all evidence sentences; keep best evidence score; take min across claim sentences",
+  "s2_norm": {
+    "min": -11.38995361328125,
+    "max": 10.688243865966797,
+    "source": "computed from grouped train split only"
+  },
+  "s4_model_dir": "/workspace/project3/signal4_model_scifact_healthver",
+  "feature_order": [
+    "norm_s2_min_relevance",
+    "new_s4_score"
+  ],
+  "coef": [
+    -0.7653058543490374,
+    7.056424024720951
+  ],
+  "intercept": -2.777884054888711,
+  "threshold": 0.41,
+  "score_convention": "output is P(unsupported); support_score = 1 - P(unsupported)",
+  "label_mapping": {
+    "SUPPORTED": 0,
+    "CONTRADICT": 1,
+    "NEI": 1
+  },
+  "n_train": 6715,
+  "n_val": 840,
+  "n_test": 839,
+  "train_metrics": {
+    "threshold": 0.41,
+    "f1": 0.9549418604651163,
+    "precision": 0.95355587808418,
+    "recall": 0.9563318777292577,
+    "auroc": 0.9769868976921219,
+    "auprc": 0.9823144404215984,
+    "ece": 0.0155,
+    "confusion_matrix": [
+      [
+        2401,
+        192
+      ],
+      [
+        180,
+        3942
+      ]
+    ]
+  },
+  "val_metrics": {
+    "threshold": 0.41,
+    "f1": 0.7734375,
+    "precision": 0.7135135135135136,
+    "recall": 0.8443496801705757,
+    "auroc": 0.7821366789464308,
+    "auprc": 0.7934465622354105,
+    "ece": 0.1901,
+    "confusion_matrix": [
+      [
+        212,
+        159
+      ],
+      [
+        73,
+        396
+      ]
+    ]
+  },
+  "test_metrics": {
+    "threshold": 0.41,
+    "f1": 0.7740835464620631,
+    "precision": 0.7138364779874213,
+    "recall": 0.845437616387337,
+    "auroc": 0.7217124816555058,
+    "auprc": 0.8102522050167396,
+    "ece": 0.224,
+    "confusion_matrix": [
+      [
+        120,
+        182
+      ],
+      [
+        83,
+        454
+      ]
+    ]
+  },
+  "sklearn_version": "1.9.0"
+}
