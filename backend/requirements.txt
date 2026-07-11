@@ -26,3 +26,6 @@ prometheus-client>=0.20
 
 # Tests
 pytest>=8.0
+
+
+pydantic-settings>=2.2
