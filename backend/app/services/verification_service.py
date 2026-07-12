@@ -1,63 +1,89 @@
 """
 backend/app/services/verification_service.py
 
-M6 centerpiece: run the full pipeline for a research question and persist a verified
-result tree across four tables.
+The pipeline: question -> retrieve -> generate -> extract claims -> verify each claim
+against the evidence IT CITES -> persist -> report the unsupported-claim rate.
 
 Flow:
-  1. generate_answer (M4)         -> draft cited answer + numbered evidence
-  2. extract_claims (M5)          -> atomic claims, each with citation numbers
-  3. for each claim:
-       - gather its cited evidence text (citation number -> evidence item)
-       - verifier.verify(claim, evidence) -> support_score
-       - label_for_score(score)   -> Supported / Weak / Unsupported
-  4. unsupported_claim_rate = #Unsupported / #claims        (the headline metric)
-  5. persist: research_jobs -> research_results + claims -> evidence    (one transaction)
+  1. generate_answer          -> cited answer + numbered evidence  (raises GenerationError)
+  2. extract_claims           -> atomic claims, each with its citation numbers
+  3. verify each claim        -> support_score, then a label band
+  4. unsupported_claim_rate   -> the headline metric
+  5. persist across four tables, atomically
 
-Why the claim<->evidence mapping works: M4 returned evidence numbered [1..N]; M5 kept each
-claim's citation numbers; here we join them. Uncited claims are verified against ALL retrieved
-evidence by default (configurable) so they get a fair score rather than an automatic zero.
+Claim<->evidence mapping: generation returns evidence numbered [1..N]; extraction keeps each
+claim's citation numbers; we join them here. A claim citing [2] is checked against source 2
+ONLY (so a claim that cites a source not supporting it is caught). An UNCITED claim is checked
+against ALL retrieved evidence — the fair-chance policy: if nothing supports it, it is
+genuinely unsupported rather than merely mis-cited.
+
+Two failure modes are handled explicitly, because both once produced plausible-looking but
+false output:
+
+  - GENERATION FAILURE. An earlier version returned the upstream error as an "answer". The
+    pipeline then extracted claims from the error message, scored them, and reported
+    verification_status="verified" — a fabricated verification result.
+  - STUB COMPONENTS. A console warning is invisible to an API client. Every response now
+    carries a `components` block, and if either component is a stub the status is
+    "development_stub", never "verified".
 """
 
 from __future__ import annotations
 
 import asyncio
+import time
 from datetime import datetime
 
-import time
 from app.db.session import AsyncSessionLocal
 from app.db import models
-from app.services.generator import generate_answer
-from app.services.claim_extractor import extract_claims
-from app.services.verifier import get_verifier, label_for_score
-from app.services.evidence_mapping import evidence_text_for_claim as _evidence_text_for_claim
 from app.monitoring import metrics
-from app.services.generation_client import GenerationError
+from app.services.claim_extractor import extract_claims
+from app.services.evidence_mapping import evidence_text_for_claim as _evidence_text_for_claim
+from app.services.generation_client import GenerationError, generation_client
+from app.services.generator import generate_answer
+from app.services.verifier import get_verifier, label_for_score
 
 
+def _components() -> dict:
+    """Which verifier and generator actually produced this result."""
+    return {
+        "verifier": get_verifier().describe(),
+        "generator": generation_client.describe(),
+    }
+
+
+def _is_degraded(components: dict) -> bool:
+    """True if either component is a stub — the result is not a real verification."""
+    return (
+        components["verifier"]["implementation"] == "StubVerifier"
+        or components["generator"]["implementation"] == "StubGenerator"
+    )
 
 
 async def verify_question(question: str, top_k: int = 5) -> dict:
     """
-    Full verified-research flow with persistence. Returns a summary dict including the
-    persisted job_id, the answer, per-claim labels, and the unsupported_claim_rate.
+    Full verified-research flow with persistence.
+
+    Returns a dict with: job_id, answer, verification_status, components, per-claim labels
+    and scores, and the unsupported_claim_rate.
+
+    verification_status is one of:
+        "verified"           real components, claims extracted and scored
+        "development_stub"   a stub verifier and/or generator was used — scores are NOT real
+        "unverifiable"       no claims could be extracted, so nothing was verified
+        "generation_failed"  generation was unavailable; nothing was generated or verified
     """
     metrics.RESEARCH_REQUESTS.inc()
     request_start = time.perf_counter()
 
-    # 1: generate (retrieve happens inside generate_answer)
-    #
-    # If generation FAILS, we must not proceed. An earlier version returned the upstream
-    # error as an answer string; the pipeline then extracted "claims" from the error message,
-    # scored them, and reported verification_status="verified" — a fabricated verification
-    # result. A generation outage is a failure, and is reported as one.
+    # --- 1: generate (retrieval happens inside generate_answer) ---------------
     gen_start = time.perf_counter()
     try:
         gen = await generate_answer(question, top_k=top_k)
     except GenerationError as e:
-        metrics.STAGE_LATENCY.labels(stage="generate").observe(
-            time.perf_counter() - gen_start
-        )
+        # A generation outage is a FAILURE, not an answer. Do not extract claims from an
+        # error string and do not report anything as "verified".
+        metrics.STAGE_LATENCY.labels(stage="generate").observe(time.perf_counter() - gen_start)
         metrics.REQUEST_LATENCY.observe(time.perf_counter() - request_start)
         return {
             "job_id": None,
@@ -65,26 +91,26 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
             "answer": None,
             "verification_status": "generation_failed",
             "error": str(e),
+            "components": _components(),
             "n_claims": 0,
             "n_unsupported": 0,
             "unsupported_claim_rate": None,
             "grounding_score": None,
             "claims": [],
         }
+
     metrics.STAGE_LATENCY.labels(stage="generate").observe(time.perf_counter() - gen_start)
     answer = gen["answer"]
-    evidence = gen["evidence"]   # [{number, title, text, chunk_id}]
+    evidence = gen["evidence"]          # [{number, title, text, chunk_id}]
 
-    # 2: extract claims
+    # --- 2: extract claims ----------------------------------------------------
     extract_start = time.perf_counter()
-    claims = extract_claims(answer)   # [{claim_text, citations}]
+    claims = extract_claims(answer)     # [{claim_text, citations}]
     metrics.STAGE_LATENCY.labels(stage="extract").observe(time.perf_counter() - extract_start)
 
-    # 3: score + label each claim (timed as the "verify" stage)
-    # 3: score + label each claim (timed as the "verify" stage)
-    #
+    # --- 3: score + label every claim ----------------------------------------
     # The real verifier is a DeBERTa forward pass per claim: synchronous, ~100s of ms each.
-    # Running that inline would block the event loop for the whole request. So ALL claims are
+    # Running that inline would block the event loop for the whole request. All claims are
     # scored in ONE worker thread — one hop, not N.
     verify_start = time.perf_counter()
     verifier = get_verifier()
@@ -112,13 +138,14 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
         })
         metrics.CLAIMS_VERIFIED.inc()
         metrics.CLAIMS_BY_LABEL.labels(label=label).inc()
+
     metrics.STAGE_LATENCY.labels(stage="verify").observe(time.perf_counter() - verify_start)
-    # 4: headline metric
+
+    # --- 4: the headline metric ----------------------------------------------
     n_claims = len(scored_claims)
     if n_claims == 0:
-        # No claims were extracted -> NOTHING was verified. Reporting 0.0 here would
-        # masquerade as a perfectly-grounded answer. Instead mark the result
-        # unverifiable so a 0% rate is never mistaken for success.
+        # Nothing was extracted -> NOTHING was verified. Reporting a 0% unsupported rate here
+        # would masquerade as a perfectly-grounded answer.
         verification_status = "unverifiable"
         n_unsupported = 0
         unsupported_rate = None
@@ -129,24 +156,26 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
         unsupported_rate = n_unsupported / n_claims
         grounding_score = sum(c["support_score"] for c in scored_claims) / n_claims
 
-    # only push real numbers to the gauges; skip when unverifiable
+    # If a stub produced any of this, it is not a real verification and must not say it is.
+    components = _components()
+    if _is_degraded(components) and verification_status == "verified":
+        verification_status = "development_stub"
+
     if unsupported_rate is not None:
         metrics.UNSUPPORTED_CLAIM_RATE.set(unsupported_rate)
     if grounding_score is not None:
         metrics.GROUNDING_SCORE.set(grounding_score)
 
-    # 5: persist the related record across four tables, atomically
+    # --- 5: persist, atomically ----------------------------------------------
     async with AsyncSessionLocal() as session:
-        # research_jobs
         job = models.ResearchJob(
             question=question,
             status="completed",
             completed_at=datetime.utcnow(),
         )
         session.add(job)
-        await session.flush()   # assigns job.job_id
+        await session.flush()           # assigns job.job_id
 
-        # research_results (PK = job_id)
         result = models.ResearchResult(
             job_id=job.job_id,
             answer=answer,
@@ -155,7 +184,8 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
         )
         session.add(result)
 
-        # claims (+ evidence per claim)
+        by_number = {e["number"]: e for e in evidence}
+
         for sc in scored_claims:
             claim_row = models.Claim(
                 job_id=job.job_id,
@@ -164,29 +194,25 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
                 label=sc["label"],
             )
             session.add(claim_row)
-            await session.flush()   # assigns claim_row.claim_id
+            await session.flush()       # assigns claim_row.claim_id
 
-            # evidence rows: link this claim to the chunk(s) it was verified against.
-            # We map the claim's citation numbers back to evidence items (which carry the
-            # title + text). NOTE: in this MVP the evidence dicts don't carry chunk_id;
-            # we store the title + text snapshot. (A later refinement can thread chunk_id
-            # through generator -> here for a hard FK to chunks.)
+            # Link the claim to the chunk(s) it was actually verified against — the same
+            # scoping rule used for scoring, so the stored provenance matches the score.
             cited = sc["citations"] if sc["citations"] else [e["number"] for e in evidence]
-            by_number = {e["number"]: e for e in evidence}
             for num in cited:
                 ev = by_number.get(num)
                 if ev is None:
-                    continue
+                    continue            # a citation to a source that doesn't exist
                 session.add(models.Evidence(
                     claim_id=claim_row.claim_id,
-                    chunk_id=ev.get("chunk_id"),        # real FK to chunks (provenance)
+                    chunk_id=ev.get("chunk_id"),
                     evidence_text=ev["text"],
                     source_title=ev["title"],
                 ))
 
         await session.commit()
         job_id = job.job_id
-        
+
     metrics.REQUEST_LATENCY.observe(time.perf_counter() - request_start)
 
     return {
@@ -194,6 +220,7 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
         "question": question,
         "answer": answer,
         "verification_status": verification_status,
+        "components": components,
         "n_claims": n_claims,
         "n_unsupported": n_unsupported,
         "unsupported_claim_rate": (
@@ -204,8 +231,6 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
         ),
         "claims": scored_claims,
     }
-    
-    
 
 
 async def _demo():
@@ -213,9 +238,10 @@ async def _demo():
         "How can we detect when generated text is unfaithful to its source?",
         top_k=3,
     )
-    print(f"job_id={result['job_id']}  unsupported_rate={result['unsupported_claim_rate']}  "
-          f"grounding={result['grounding_score']}")
-    print(f"claims: {result['n_claims']}  unsupported: {result['n_unsupported']}\n")
+    print(f"status={result['verification_status']}  job_id={result['job_id']}")
+    print(f"components: {result['components']}")
+    print(f"claims={result['n_claims']}  unsupported={result['n_unsupported']}  "
+          f"rate={result['unsupported_claim_rate']}\n")
     for i, c in enumerate(result["claims"], 1):
         print(f"  {i}. [{c['label']:<11} {c['support_score']:.3f}] {c['claim_text']}")
 

@@ -8,10 +8,12 @@ MODEL SOURCE. The checkpoint is ~700MB and is NOT in the repository — it lives
 
     https://huggingface.co/Primeinvincible/scifact-healthver-verifier
 
-By default this class loads it from there (transformers caches it under ~/.cache/huggingface
-after the first download, so a fresh clone just works). Set VERIFIER_MODEL_PATH to a local
-directory to use a local checkpoint instead — useful offline, or when testing a new fine-tune
-before publishing it:
+It is loaded from there by default (transformers caches it, so a fresh clone just works), and
+**pinned to a specific revision**. Following mutable `main` would mean a future push to the
+model repo silently changes verification behaviour while the documented metrics still describe
+the old weights — an invisible, un-versioned change to the thing this whole project measures.
+
+Override with a local directory when developing a new checkpoint:
 
     VERIFIER_MODEL_PATH=app/services/verifier_model/signal4_model_scifact_healthver
 
@@ -20,15 +22,13 @@ Scoring:
     p_unsupported = softmax(logits)[:, 1]
     support_score = 1 - p_unsupported            (the interface contract, in [0, 1])
 
-The tokenization matches the thesis scoring script exactly; only the checkpoint differs.
+Tokenization matches the thesis scoring script exactly; only the checkpoint differs.
 
 Honest performance note. On the custom leakage-safe grouped SciFact+HealthVer test split:
-F1 0.77, precision 0.71, recall 0.84, AUROC 0.71, ECE 0.19. It is recall-oriented and
-imperfectly calibrated — scores are useful as labels and rankings, NOT as probabilities.
+F1 0.77, precision 0.71, recall 0.84, AUROC 0.71, ECE 0.19. Recall-oriented and imperfectly
+calibrated — scores are useful as labels and rankings, NOT as probabilities.
 
-This is a side-project adaptation of the thesis verifier, not the thesis result itself. The
-thesis system (RAGTruth S4 + out-of-fold fusion) is untouched and remains better calibrated
-on its native domain.
+This is a side-project adaptation of the thesis verifier, not the thesis result itself.
 """
 
 from __future__ import annotations
@@ -41,12 +41,15 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 from app.services.verifier import Verifier
 
-# Default: pull from the Hub, so a fresh clone works with no manual setup.
 HF_MODEL_ID = "Primeinvincible/scifact-healthver-verifier"
 
-# Optional override for a local checkpoint directory.
-LOCAL_PATH_ENV = "VERIFIER_MODEL_PATH"
+# PINNED. This is the exact commit the reported metrics were measured on. Do not replace it
+# with "main" — that would let a model-repo push silently change verification behaviour.
+# To adopt a new checkpoint: publish it, re-run the evaluation, update BOTH this pin and the
+# metrics in docs/verifier.md, together.
+HF_REVISION = "902d07844e30e59d311f5cc500b9ec13d08d0002"
 
+LOCAL_PATH_ENV = "VERIFIER_MODEL_PATH"
 MAX_LENGTH = 512
 
 
@@ -54,13 +57,13 @@ def _clamp01(x: float) -> float:
     return max(0.0, min(1.0, x))
 
 
-def _resolve_model_source() -> str:
+def resolve_model_source() -> tuple[str, str | None]:
     """
-    Local directory if VERIFIER_MODEL_PATH points at a real one; otherwise the Hub.
+    Returns (source, revision). Revision is None for a local directory.
 
-    Fails LOUDLY if VERIFIER_MODEL_PATH is set but missing. Silently falling through to the
-    Hub would score with a DIFFERENT model than the operator intended — exactly the class of
-    silent-substitution bug this project exists to avoid.
+    Fails LOUDLY if VERIFIER_MODEL_PATH is set but is not a directory. Silently falling back
+    to the Hub would score with a DIFFERENT model than the operator intended — exactly the
+    class of silent substitution this project exists to avoid.
     """
     local = os.getenv(LOCAL_PATH_ENV)
     if local:
@@ -68,28 +71,42 @@ def _resolve_model_source() -> str:
         if not path.is_dir():
             raise FileNotFoundError(
                 f"{LOCAL_PATH_ENV}={local!r} is set but is not a directory. "
-                f"Unset it to load {HF_MODEL_ID} from the Hub instead."
+                f"Unset it to load {HF_MODEL_ID}@{HF_REVISION[:8]} from the Hub instead."
             )
-        return str(path)
-    return HF_MODEL_ID
+        return str(path), None
+    return HF_MODEL_ID, HF_REVISION
 
 
 class RealVerifier(Verifier):
     """Fine-tuned DeBERTa faithfulness verifier. Loads the model once at construction."""
 
     def __init__(self) -> None:
-        source = _resolve_model_source()
-        origin = "local checkpoint" if source != HF_MODEL_ID else "HuggingFace Hub"
-        print(f"[verifier] loading {source} ({origin}) ...")
+        source, revision = resolve_model_source()
+
+        if revision:
+            print(f"[verifier] loading {source}@{revision[:8]} (HuggingFace Hub, pinned) ...")
+            kwargs = {"revision": revision}
+        else:
+            print(f"[verifier] loading {source} (local checkpoint) ...")
+            kwargs = {}
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.tokenizer = AutoTokenizer.from_pretrained(source)
-        self.model = AutoModelForSequenceClassification.from_pretrained(source)
+        self.tokenizer = AutoTokenizer.from_pretrained(source, **kwargs)
+        self.model = AutoModelForSequenceClassification.from_pretrained(source, **kwargs)
         self.model.to(self.device)
         self.model.eval()
 
         self.model_source = source
+        self.model_revision = revision
         print(f"[verifier] ready on {self.device}.")
+
+    def describe(self) -> dict:
+        """Component metadata, surfaced in every API response."""
+        return {
+            "implementation": "RealVerifier",
+            "model": self.model_source,
+            "revision": self.model_revision,
+        }
 
     def _p_unsupported(self, claim: str, evidence: str) -> float:
         enc = self.tokenizer(
@@ -113,7 +130,7 @@ class RealVerifier(Verifier):
         return {
             "p_unsupported": round(p, 4),
             "support_score": round(_clamp01(1.0 - p), 4),
-            "model": self.model_source,
+            **self.describe(),
         }
 
 

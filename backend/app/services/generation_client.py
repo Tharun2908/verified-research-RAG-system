@@ -64,6 +64,10 @@ class GenerationClient:
     async def generate(self, prompt: str) -> str:
         raise NotImplementedError
 
+    def describe(self) -> dict:
+        """Component metadata, surfaced in every API response."""
+        return {"implementation": type(self).__name__}
+
 
 class OpenRouterClient(GenerationClient):
     """Hosted-LLM generation via OpenRouter, with a model fallback chain."""
@@ -71,6 +75,13 @@ class OpenRouterClient(GenerationClient):
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
         self.last_model: str | None = None
+
+    def describe(self) -> dict:
+        return {
+            "implementation": "OpenRouterClient",
+            "model": self.last_model,      # the model that actually answered
+            "candidates": GEN_MODELS,
+        }
 
     async def generate(self, prompt: str) -> str:
         headers = {
@@ -110,7 +121,14 @@ class StubGenerator(GenerationClient):
     """
 
     def __init__(self) -> None:
-        self.last_model = "stub"
+        self.last_model = None
+
+    def describe(self) -> dict:
+        return {
+            "implementation": "StubGenerator",
+            "model": None,
+            "warning": "placeholder text; any grounding computed over it is meaningless",
+        }
 
     async def generate(self, prompt: str) -> str:
         return (

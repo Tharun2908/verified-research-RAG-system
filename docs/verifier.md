@@ -63,6 +63,8 @@ This is a **custom leakage-safe grouped split**, not the official SciFact/Health
 | AUROC | 0.71 |
 | ECE | 0.19 |
 
+Recompute these from committed artifacts: python verifier_study/3_gold_and_eval/reproduce_bootstrap.py
+
 And the failing case:
 
 ```
@@ -153,7 +155,7 @@ Anti-circularity was enforced explicitly: no evaluated verifier was allowed to g
 
 On the human-reviewed grounded-hard tranche (101 binary claims, 15 unsupported, 11 question clusters):
 
-| Model | Weighted F1 | Precision | Recall | AUROC |
+| Model |  Binary F1(unsupported class, design-weighted) | Precision | Recall | AUROC |
 |---|---:|---:|---:|---:|
 | **Base SciFact/HealthVer (unadapted)** | **0.403** | **0.285** | 0.689 | **0.788** |
 | S2 + base, train-fitted fusion | 0.395 | 0.277 | 0.689 | 0.741 |
@@ -166,7 +168,7 @@ On the human-reviewed grounded-hard tranche (101 binary claims, 15 unsupported, 
 And the fusion result is worth dwelling on. A validation-fitted fusion *appeared* to help. Under **question-grouped out-of-fold stacking** — the leakage-resistant protocol — the advantage vanished and inverted:
 
 ```
-OOF fusion vs. base verifier, weighted F1:  -0.074
+OOF fusion vs. base verifier,  Binary F1(unsupported class, design-weighted):  -0.074
 95% question-clustered bootstrap CI:        [-0.131, -0.018]
 ```
 
