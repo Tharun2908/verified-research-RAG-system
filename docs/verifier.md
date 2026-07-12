@@ -153,7 +153,8 @@ Anti-circularity was enforced explicitly: no evaluated verifier was allowed to g
 
 ### 3.5 The result
 
-On the human-reviewed grounded-hard tranche (101 binary claims, 15 unsupported, 11 question clusters):
+On the human-reviewed grounded-hard tranche (101 binary claims, 15 unsupported, 62 question
+clusters; the bootstrap resamples all 62):
 
 | Model |  Binary F1(unsupported class, design-weighted) | Precision | Recall | AUROC |
 |---|---:|---:|---:|---:|

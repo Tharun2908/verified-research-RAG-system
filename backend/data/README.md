@@ -33,7 +33,8 @@ The headline model comparison in `docs/verifier.md`.
 - `fold_assignments.jsonl` — the question-grouped OOF folds
 - `oof_fusion_metrics_summary.json` — fusion metrics
 
-**Reproducibility.** The OOF-fusion predictions (fusion_ft_scifact_oof_hard_predictions.jsonl), the train-fitted fusion predictions, the fold assignments, and the human labels are all committed — so the reported −0.074 weighted-F1 difference (95% CI [−0.131, −0.018]) can be recomputed with verifier_study/3_gold_and_eval/bootstrap_grounded_hard_clustered.py.
+**Reproducibility.** The OOF-fusion predictions (fusion_ft_scifact_oof_hard_predictions.jsonl), the train-fitted fusion predictions, the fold assignments, and the human labels are all committed — so the reported −0.074 weighted-F1 difference (95% CI [−0.131, −0.018]) can be recomputed from the repository root with : 
+python verifier_study/3_gold_and_eval/reproduce_bootstrap.
 
 ## Distillation (`distill_arxiv/`, `distill_arxiv_v2/`)
 Selected reports from the arXiv distillation study (see `docs/verifier.md`):

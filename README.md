@@ -149,7 +149,11 @@ stub and prints a wall of warnings. `DEV_STUB_VERIFIER=true` swaps in a lexical-
 for model-free development — and says so. Both defaults are *real*; you have to opt out.
 
 ```bash
-pytest tests/ -v    # 37 tests. No database or models required — pure-logic core only.
+pytest tests/ -v    # 53 tests. No database or models required.
+#   claim extraction, citation mapping, label bands, rate maths
+#   generation failure -> typed error -> HTTP 503
+#   stub components are machine-detectable
+#   model source resolution (pinned Hub revision / local override)
 ```
 
 ---
@@ -204,7 +208,8 @@ the first thing to consolidate.
 - **Domain gap remains.** The deployed verifier is trained on biomedical claim-verification data and serves a CS/ML corpus. The attempt to close that gap is documented — it failed.
 - **Custom splits.** SciFact/HealthVer numbers come from a custom leakage-safe grouped split and are **not** comparable to published benchmark results.
 - **Claim extraction is its own failure mode.** Human review measured a 6.7% extraction-failure rate, independent of verifier accuracy. Fixed (structural segmentation, abbreviation masking) and now regression-tested — but in any claim-level pipeline, extraction quality must be monitored *separately* from verifier quality, or extraction bugs get misattributed to the model.
-- **The grounded-hard evaluation is a deliberately enriched stress test** (101 binary claims, 15 unsupported, 11 question clusters), not an estimate of production prevalence. Absolute intervals are wide; paired comparisons are more stable.
+- **The grounded-hard evaluation is a deliberately enriched stress test** ((101 binary claims, 15 unsupported, across 62 question clusters — 11 of which contain at
+least one unsupported claim), not an estimate of production prevalence. Absolute intervals are wide; paired comparisons are more stable.
 - **The demo's generator is not the evaluated generator.** The offline evaluation used self-hosted Mistral-7B; it is no longer served on OpenRouter, so the live path uses a current hosted model. The verifier is the same.
 - **This is a research and serving prototype, not a production service.** No auth, no rate limiting, no CI, no migrations. `/verify` is an unauthenticated GET that writes to the database. The serving *benchmarks* are real (measured on an H200); the *operational* hardening is not there.
 

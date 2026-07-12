@@ -20,7 +20,7 @@ Expected (matching backend/data/grounded_hard_eval/bootstrap_summary.json):
     base verifier F1        0.402926
     OOF fusion F1           0.329228
     difference             -0.073698
-    95% clustered CI       [-0.131, -0.018]
+    95% clustered CI       [-0.1313, -0.0181]
 
 THE METRIC is BINARY F1 on the UNSUPPORTED class (sklearn average="binary"), NOT a
 support-weighted average over both classes. That distinction matters enormously here: with 86
@@ -141,7 +141,7 @@ def main() -> None:
         if y is None or pb is None or po is None:
             continue
         rows.append({
-            "qid": b[CLUSTER],
+            "qid": str(b[CLUSTER]),
             "y": y,
             "base": pb,
             "oof": po,
@@ -160,8 +160,10 @@ def main() -> None:
     w = np.array([r["w"] for r in rows])
     qids = [r["qid"] for r in rows]
 
-    print(f"Binary claims: {len(rows)}   unsupported: {int(y.sum())}   "
-          f"question clusters (qid): {len(set(qids))}")
+    q_with_pos = len({q for q, yy in zip(qids, y) if yy == 1})
+    print(f"Binary claims: {len(rows)}   unsupported: {int(y.sum())}")
+    print(f"Question clusters (unique qid): {len(set(qids))}   "
+          f"clusters containing >=1 unsupported claim: {q_with_pos}")
     print(f"Design-weighted mass — supported: {w[y == 0].sum():.1f}   "
           f"unsupported: {w[y == 1].sum():.1f}")
     print("Metric: weighted binary F1 on the UNSUPPORTED class\n")
@@ -175,10 +177,16 @@ def main() -> None:
     print(f"difference         {diff:+.6f}")
 
     # --- question-clustered paired bootstrap ---
-    by_q: dict[object, list[int]] = defaultdict(list)
+    #
+    # Cluster ORDER matters. The RNG draws indices into q_list, so a different ordering of the
+    # same clusters yields different bootstrap replicates — same point estimate, different CI.
+    # The original script sorted STRING-valued qids; matching that exactly reproduces the
+    # committed interval. (A reproduction script that gets "nearly" the same CI is not a
+    # reproduction.)
+    by_q: dict[str, list[int]] = defaultdict(list)
     for i, q in enumerate(qids):
-        by_q[q].append(i)
-    q_list = list(by_q)
+        by_q[str(q)].append(i)
+    q_list = sorted(by_q)
 
     diffs = []
     for _ in range(args.n_boot):
