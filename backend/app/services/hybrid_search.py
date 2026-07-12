@@ -22,12 +22,14 @@ that pool. Accuracy of a cross-encoder at a fraction of its full-corpus cost.
 """
 
 from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
 
 import asyncio
 
 from sqlalchemy import select
-from sentence_transformers import SentenceTransformer
-
 from app.db.session import AsyncSessionLocal
 from app.db import models
 from app.db.qdrant_setup import get_qdrant_client, COLLECTION_NAME
@@ -36,7 +38,21 @@ from app.services.fusion import reciprocal_rank_fusion
 from app.services.reranker import rerank
 
 # Shared embedding model for the dense leg (same model used at ingestion — required).
-_embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+#
+# Constructed LAZILY. Building it at import time meant that importing ANY module downstream
+# of this one — a route, a test, even `init_db` — downloaded and loaded ~100MB of models.
+# Import should be free; work should happen when the work is asked for.
+EMBED_MODEL_NAME = "all-MiniLM-L6-v2"
+_embed_model: SentenceTransformer | None = None
+
+
+def get_embed_model() -> SentenceTransformer:
+    """Lazy: importing this module must not import or download anything heavy."""
+    global _embed_model
+    if _embed_model is None:
+        from sentence_transformers import SentenceTransformer   # deferred
+        _embed_model = SentenceTransformer(EMBED_MODEL_NAME)
+    return _embed_model
 
 
 def _dense_search_ids(query: str, top_k: int) -> list[int]:
@@ -48,7 +64,7 @@ def _dense_search_ids(query: str, top_k: int) -> list[int]:
     simple and self-contained, we instead return qdrant_ids and let the caller map.
     """
     qdrant = get_qdrant_client()
-    query_vector = _embed_model.encode(query).tolist()
+    query_vector = get_embed_model().encode(query).tolist()
     hits = qdrant.query_points(
         collection_name=COLLECTION_NAME,
         query=query_vector,

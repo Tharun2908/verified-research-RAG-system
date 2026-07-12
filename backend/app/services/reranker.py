@@ -11,15 +11,34 @@ Cross-encoder (this): feeds (query, doc) TOGETHER into the model and outputs one
 relevance score. More accurate because the two texts attend to each other, but nothing
 can be precomputed — every (query, candidate) pair is a fresh forward pass. So it only
 runs over the small candidate set the cheap retrievers already narrowed down.
+
+The model is constructed LAZILY. Building it at import time meant that importing anything
+downstream — a route, a test, even `init_db` — pulled in ~100MB of transformers. Imports
+should be free; work happens when work is asked for. main.py warms it at startup, so no
+user request pays the load cost.
 """
 
 from __future__ import annotations
 
-from sentence_transformers import CrossEncoder
+from typing import TYPE_CHECKING
 
-# Thesis S2 model. Loaded once at import. Outputs a relevance score per (query, doc) pair
-# (higher = more relevant). Runs fine on CPU for small candidate sets.
-_reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+if TYPE_CHECKING:                       # for editors/mypy only; never imported at runtime
+    from sentence_transformers import CrossEncoder
+
+# Thesis S2 model. Outputs a relevance score per (query, doc) pair (higher = more relevant).
+# Runs fine on CPU for small candidate sets.
+RERANK_MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
+_model: CrossEncoder | None = None
+
+
+def get_reranker() -> CrossEncoder:
+    """Lazy: importing this module must not import or download anything heavy."""
+    global _model
+    if _model is None:
+        from sentence_transformers import CrossEncoder   # deferred until first use
+        _model = CrossEncoder(RERANK_MODEL_NAME)
+    return _model
 
 
 def rerank(
@@ -36,7 +55,7 @@ def rerank(
 
     # Build the (query, doc) pairs the cross-encoder scores jointly.
     pairs = [(query, text) for (_cid, text) in candidates]
-    scores = _reranker.predict(pairs)   # one score per pair
+    scores = get_reranker().predict(pairs)      # one score per pair
 
     chunk_ids = [cid for (cid, _text) in candidates]
     ranked = sorted(

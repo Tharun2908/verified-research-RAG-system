@@ -21,9 +21,12 @@ from app.api.routes_search import router as search_router
 from app.api.routes_retrieve import router as retrieve_router
 from app.api.routes_research import router as research_router
 from app.api.routes_verify import router as verify_router
+import asyncio
 from app.services.bm25_retriever import warm_bm25
 from app.services.verifier import warm_verifier
 from app.services.generation_client import describe_generator
+from app.services.hybrid_search import get_embed_model
+from app.services.reranker import get_reranker
 
 
 @asynccontextmanager
@@ -31,6 +34,13 @@ async def lifespan(app: FastAPI):
     # Build the BM25 index once at startup so no request pays the rebuild cost.
     n = await warm_bm25()
     print(f"[startup] BM25 index built over {n} chunks.")
+
+    # Retrieval models are constructed LAZILY (so importing a route or running the tests
+    # doesn't download 100MB of transformers). Warm them here, where the cost belongs —
+    # not on a user's first request.
+    await asyncio.to_thread(get_embed_model)
+    await asyncio.to_thread(get_reranker)
+    print("[startup] retrieval models loaded (embedder + cross-encoder).")
 
     # Load the verifier once at startup too. The real verifier loads a ~700MB DeBERTa
     # checkpoint; doing it lazily would make the first user's request pay for it.

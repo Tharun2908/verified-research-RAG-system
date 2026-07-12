@@ -14,7 +14,9 @@ These tests assert the contract at the boundary:
                       ->  the verifier is NEVER invoked
                       ->  nothing is persisted
 
-Everything below the route is faked. No database, no models, no network.
+Everything below the route is faked. No database, no models, no network — which requires
+that the retrieval models are constructed LAZILY (see hybrid_search.get_embed_model and
+reranker.get_reranker). Importing a route must not download 100MB of transformers.
 """
 
 from __future__ import annotations
@@ -156,10 +158,14 @@ class TestSuccessfulVerifyShape:
         )
 
         r = client.get("/verify", params={"q": "what is RAG?"})
-        # persistence is faked, so job_id assignment may not work — we only assert the
-        # component contract, which is what a client relies on to trust the scores.
-        if r.status_code == 200:
-            body = r.json()
-            assert "components" in body
-            assert body["components"]["verifier"]["implementation"] == "RealVerifier"
-            assert "generator" in body["components"]
+
+        # Assert the status FIRST. A conditional `if r.status_code == 200:` would let this
+        # test pass silently on a 500 — testing nothing at all.
+        assert r.status_code == 200, f"expected 200, got {r.status_code}: {r.text[:300]}"
+
+        body = r.json()
+        assert "components" in body
+        assert body["components"]["verifier"]["implementation"] == "RealVerifier"
+        assert "generator" in body["components"]
+        assert body["verification_status"] == "verified"
+        assert body["n_claims"] >= 1
