@@ -75,10 +75,10 @@ ECE                                       0.058  →   0.19     ← calibration 
 - The first dataset was **96% contaminated**. Splitting by top-1 retrieved paper protects a retrieval *summary*, not the evidence universe claims actually attach to. Caught by a stricter audit; rebuilt with a protected-paper split (verified: 11,794 evidence attachments, **0** protected overlap).
 - An independent audit of **all 477** claims the teacher labelled unsupported found **218 were actually supported** — 46% false-positive contamination — confirmed by blind human review at 94.3% agreement.
 - The evaluation set was measuring the wrong thing: 71 of its 75 unsupported claims were *bait* (trivially off-topic); only 4 were subtle grounded overclaims. A **grounded-hard** stress test was built and human-reviewed.
-- A fusion that *appeared* to help was an artifact. Under question-grouped **out-of-fold stacking** with a **clustered bootstrap**, it was reliably **worse**: −0.074  Binary F1 (unsupported class, design-weighted), 95% CI [−0.131, −0.018].
+- A fusion that *appeared* to help was an artifact. Under question-grouped **out-of-fold stacking** with a **clustered bootstrap**, it was reliably **worse**:−0.074 Binary F1 (unsupported class, design-weighted), 95% CI [−0.131, −0.018].
 - The auto-cleaning procedure was **pre-registered with an acceptance threshold — and failed it**. No cleaned retrain was run.
 
-**The unadapted verifier won** ( Binary F1 (unsupported class, design-weighted) 0.403, AUROC 0.788 on grounded-hard) and is what ships. Three weeks produced a *better-understood* verifier, not a better one — and the decision was not to deploy the worse model.
+**The unadapted verifier won** ( Binary F1 (unsupported class, design-weighted): 0.403, AUROC 0.788 on grounded-hard) and is what ships. Three weeks produced a *better-understood* verifier, not a better one — and the decision was not to deploy the worse model.
 
 ---
 
