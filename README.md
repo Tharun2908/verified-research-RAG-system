@@ -149,7 +149,7 @@ stub and prints a wall of warnings. `DEV_STUB_VERIFIER=true` swaps in a lexical-
 for model-free development — and says so. Both defaults are *real*; you have to opt out.
 
 ```bash
-pytest tests/ -v    # 53 tests. No database or models required.
+pytest tests/ -v    # 56 tests. No database or models required.
 #   claim extraction, citation mapping, label bands, rate maths
 #   generation failure -> typed error -> HTTP 503
 #   stub components are machine-detectable

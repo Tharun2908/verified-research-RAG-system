@@ -63,8 +63,10 @@ This is a **custom leakage-safe grouped split**, not the official SciFact/Health
 | AUROC | 0.71 |
 | ECE | 0.19 |
 
-Recompute these from committed artifacts: python verifier_study/3_gold_and_eval/reproduce_bootstrap.py
-
+Recompute these from committed artifacts: 
+```
+python verifier_study/3_gold_and_eval/reproduce_bootstrap.py
+```
 And the failing case:
 
 ```

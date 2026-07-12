@@ -131,6 +131,16 @@ class TestSuccessfulVerifyShape:
             def describe(self):
                 return {"implementation": "RealVerifier", "model": "m", "revision": "r"}
 
+        class FakeGenerator:
+            """
+            Must be patched too. `generation_client` is a MODULE-LEVEL singleton chosen at
+            import time: with no OPENROUTER_API_KEY it is a StubGenerator, so the status
+            would be "development_stub" and this test would fail — or pass — depending on
+            the developer's .env. A test must not depend on the environment it runs in.
+            """
+            def describe(self):
+                return {"implementation": "OpenRouterClient", "model": "fake-model"}
+
         class NoopSession:
             async def __aenter__(self):
                 return self
@@ -154,6 +164,9 @@ class TestSuccessfulVerifyShape:
             "app.services.verification_service.get_verifier", lambda: FakeVerifier()
         )
         monkeypatch.setattr(
+            "app.services.verification_service.generation_client", FakeGenerator()
+        )
+        monkeypatch.setattr(
             "app.services.verification_service.AsyncSessionLocal", lambda: NoopSession()
         )
 
@@ -164,8 +177,105 @@ class TestSuccessfulVerifyShape:
         assert r.status_code == 200, f"expected 200, got {r.status_code}: {r.text[:300]}"
 
         body = r.json()
-        assert "components" in body
-        assert body["components"]["verifier"]["implementation"] == "RealVerifier"
-        assert "generator" in body["components"]
         assert body["verification_status"] == "verified"
+        assert body["components"]["verifier"]["implementation"] == "RealVerifier"
+        assert body["components"]["generator"]["implementation"] == "OpenRouterClient"
         assert body["n_claims"] >= 1
+
+    def test_stub_components_downgrade_the_status(self, client, monkeypatch):
+        """
+        A stub anywhere in the chain means the result is NOT a real verification, and the
+        response must say so — a client cannot see the server's console warning.
+        """
+        from app.services.verifier import StubVerifier
+        from app.services.generation_client import StubGenerator
+
+        async def fake_generate(question: str, top_k: int = 5):
+            return {
+                "question": question,
+                "answer": "RAG combines retrieval with generation [1].",
+                "evidence": [{"number": 1, "title": "T", "text": "RAG combines retrieval "
+                                                                 "and generation.",
+                              "chunk_id": 1}],
+            }
+
+        class NoopSession:
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *a):
+                return False
+
+            def add(self, obj):
+                pass
+
+            async def flush(self):
+                pass
+
+            async def commit(self):
+                pass
+
+        monkeypatch.setattr(
+            "app.services.verification_service.generate_answer", fake_generate
+        )
+        monkeypatch.setattr(
+            "app.services.verification_service.get_verifier", lambda: StubVerifier()
+        )
+        monkeypatch.setattr(
+            "app.services.verification_service.generation_client", StubGenerator()
+        )
+        monkeypatch.setattr(
+            "app.services.verification_service.AsyncSessionLocal", lambda: NoopSession()
+        )
+
+        r = client.get("/verify", params={"q": "what is RAG?"})
+        assert r.status_code == 200
+        body = r.json()
+        assert body["verification_status"] == "development_stub", (
+            "a stub-produced result must NOT claim to be 'verified'"
+        )
+        assert "warning" in body["components"]["verifier"]
+
+
+class TestGenerationFailureDoesNotLoadTheVerifier:
+    """
+    Regression for a bug my own tests could not catch: the GenerationError handler called
+    get_verifier() merely to DESCRIBE the verifier — which would construct (and download) a
+    ~700MB model to report on a component that was never used, violating the very contract
+    the failure path exists to uphold.
+
+    The earlier test faked get_verifier(), so the real construction never happened and the
+    violation was invisible. This one asserts the function is NOT CALLED AT ALL.
+    """
+
+    def test_get_verifier_is_not_called_on_generation_failure(self, client, monkeypatch):
+        called: list[int] = []
+
+        def exploding_get_verifier():
+            called.append(1)
+            raise AssertionError(
+                "get_verifier() was called on a failed generation — this would load a "
+                "700MB checkpoint to describe a verifier that never ran."
+            )
+
+        async def boom(question: str, top_k: int = 5):
+            raise GenerationError("simulated outage")
+
+        monkeypatch.setattr("app.services.verification_service.generate_answer", boom)
+        monkeypatch.setattr(
+            "app.services.verification_service.get_verifier", exploding_get_verifier
+        )
+
+        r = client.get("/verify", params={"q": "anything"})
+
+        assert r.status_code == 503
+        assert called == [], "the verifier must not be constructed when generation fails"
+        assert r.json()["detail"]
+
+    def test_failure_response_reports_the_verifier_as_not_invoked(self, client, monkeypatch):
+        """The failure body should still be honest about which components ran."""
+        from app.services.verification_service import _components_generation_failed
+
+        comps = _components_generation_failed()
+        assert comps["verifier"]["implementation"] == "not_invoked"
+        assert "generator" in comps

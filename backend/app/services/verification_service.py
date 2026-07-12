@@ -52,6 +52,22 @@ def _components() -> dict:
     }
 
 
+def _components_generation_failed() -> dict:
+    """
+    Components for a request that never got past generation.
+
+    Deliberately does NOT call get_verifier(): constructing the verifier would download and
+    load a ~700MB checkpoint purely to *describe* a component that was never used — and would
+    violate the contract this failure path exists to uphold ("generation failed -> the
+    verifier is never invoked"). Describe the generator (which did run, and failed); report
+    the verifier as not invoked.
+    """
+    return {
+        "verifier": {"implementation": "not_invoked"},
+        "generator": generation_client.describe(),
+    }
+
+
 def _is_degraded(components: dict) -> bool:
     """True if either component is a stub — the result is not a real verification."""
     return (
@@ -91,7 +107,7 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
             "answer": None,
             "verification_status": "generation_failed",
             "error": str(e),
-            "components": _components(),
+            "components": _components_generation_failed(),
             "n_claims": 0,
             "n_unsupported": 0,
             "unsupported_claim_rate": None,
