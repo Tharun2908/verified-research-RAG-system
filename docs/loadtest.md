@@ -8,8 +8,9 @@ Both the generator and the verifier ran as **stubs**: generation used the stub L
 output, no real model call) and verification used `StubVerifier` (lexical overlap), *not* the real
 S2+S4 fusion verifier. This is intentional — stubbing the two model-heavy stages isolates the
 retrieval, async-orchestration, connection-pool, and persistence layers so their bottlenecks are
-visible rather than masked by model latency. The real generator was benchmarked separately on the
-H200 in M9 (`docs/serving.md`); the real S2+S4 verifier was evaluated in batch in M8 (`docs/`).
+visible rather than masked by model latency. A separate self-hosted Mistral/vLLM generation study was benchmarked on the H200 in M9
+(`docs/serving.md`); the current live generator uses OpenRouter. The deployed SciFact/HealthVer
+DeBERTa verifier and stronger offline verifier baselines are documented in `docs/verifier.md`.
 
 **Test setup:** async load client (`backend/load_test/loadtest_verify.py`), 64 requests/level,
 concurrency levels 1–32, rotating set of varied questions. Infra (Postgres/Qdrant/Redis) in Docker;
@@ -95,11 +96,10 @@ signature of a compute-bound ceiling.
 
 ## The remaining ceiling: parallel CPU inference (correctly a hardware/architecture limit)
 
-The plateau at ~4 concurrent requests on a **16-core** machine has a precise cause:
+The plateau at a few concurrent requests on a **16-core** machine has a clear cause:
 **PyTorch intra-op parallelism.** `torch.get_num_threads() == 12`, so each cross-encoder inference
-already spreads across up to 12 threads. A handful of concurrent inferences therefore saturate the
-16 physical cores — request-level concurrency tops out at roughly `cores ÷ threads-per-inference`,
-i.e. ~4, not ~16. The cores are not idle; they are consumed by intra-op parallelism *within* each
+can already use many CPU threads. A handful of concurrent inferences therefore saturate the
+available cores. The cores are not idle; they are consumed by intra-op parallelism *within* each
 request.
 
 This is a **hardware/architecture ceiling, not a software defect** — every application-layer
@@ -134,9 +134,8 @@ per worker.)
 ### Scaling beyond the CPU ceiling — options
 The thread tuning improves the CPU ceiling but does not remove it. Fully scaling the production
 (pool=50) reranker is a provisioning decision:
-- **GPU inference** for the embedder + cross-encoder (models drop from seconds to ~tens of ms) —
-  the same "serve inference on dedicated hardware" pattern already used for generation via vLLM on
-  the H200 in M9.
+- **GPU inference** for the embedder + cross-encoder — the same dedicated-inference pattern
+  explored in the separate H200 vLLM serving study, though the current live generator uses OpenRouter.
 - **A dedicated reranker microservice** (model inference scales independently of the API).
 - **Tuned intra-op threads** (shipped default lowered from 12 to 4 based on the sweep above).
 
@@ -155,8 +154,8 @@ The thread tuning improves the CPU ceiling but does not remove it. Fully scaling
 
 **Takeaway:** three real application-layer bottlenecks diagnosed and fixed under load, with the
 improvement demonstrated empirically (collapse → scaling). The remaining limit is correctly
-identified as parallel CPU-inference capacity — a hardware boundary addressable by serving the
-models on GPU, exactly as the generation path already is.
+identified as parallel CPU-inference capacity — a hardware boundary addressable by dedicated
+GPU inference or a separate model-serving tier.
 
 ### Artifacts
 `backend/load_test/loadtest_verify.py` (load client). Raw results (committed in

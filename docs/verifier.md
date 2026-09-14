@@ -34,7 +34,7 @@ The verifier rubber-stamped it. A live demo whose central claim is "this system 
 
 ## 2. What worked: SciFact + HealthVer adaptation
 
-The fix was to continue fine-tuning S4 on public **scientific claim-verification** data, where the "unsupported" class is densely represented and in-domain.
+The fix was to continue fine-tuning S4 on public **scientific claim-verification** data, where the "unsupported" class is densely represented and the task is closer to the deployment setting than RAGTruth.
 
 **Data.** `allenai/scifact_entailment` + `dwadden/healthver_entailment` — both `(claim, abstract) → SUPPORT | CONTRADICT | NEI`. Collapsed to binary, since the deployed verifier answers one question ("does this evidence support this claim?"): `SUPPORT → 0`, `CONTRADICT + NEI → 1`.
 
@@ -119,7 +119,7 @@ Protected overlap: 0
 
 Zero. That check is the load-bearing one.
 
-### 3.3 The teacher was wrong 46% of the time
+### 3.3 46% false-positive contamination in the teacher's unsupported class
 
 Training labels came from **Llama-3.3-70B** (deliberately not Opus, which was reserved as an independent auditor):
 
@@ -135,7 +135,7 @@ relabeled UNSUPPORTED: 181
 relabeled ABSTENTION:   78
 ```
 
-A **blind human audit** of 100 of these disagreements confirmed the corrections: **94.3% agreement** on the proposed supported→unsupported reversals. The teacher's positive class was substantially contaminated with false positives.
+A **blind human audit** of 100 of these disagreements confirmed the corrections: **94.3% agreement** on the proposed unsupported→supported corrections. The teacher's positive class was substantially contaminated with false positives.
 
 The obvious move — auto-clean the labels and retrain — was **pre-registered with an acceptance threshold**, and it *failed* that threshold: the abstention corrections reached only 30.0% exact agreement and 73.3% binary action agreement with human review. Below the bar. **No cleaned retrain was performed.** Pre-registering the rule is what made it possible to fail it honestly instead of tuning until the answer looked good.
 
@@ -376,7 +376,6 @@ The in-domain teacher-distillation experiment did **not** improve the lightweigh
 - an external MiniCheck-7B baseline showing that the deployed lightweight verifier is **not** the strongest available verifier on this domain;
 - a confirmation cascade that recovered most of MiniCheck's Binary F1 while invoking it on **40.4%** of claims;
 - an H200 efficiency benchmark showing that the cascade reaches **96.3% of MiniCheck-only F1 at 75.3% of its measured verification compute cost**, rather than assuming escalation rate equals cost;
-- an H200 efficiency benchmark showing that the cascade reaches **96.3% of MiniCheck-only F1 at 75.3% of its measured verification compute cost**, rather than assuming escalation rate equals cost;
 - and a generic uncertainty cascade that failed, preventing a superficially attractive routing story from being overstated.
 
 The useful result is not that every experiment succeeded. It is that the system's claims were repeatedly revised when stronger evaluation contradicted the earlier story.
@@ -396,8 +395,6 @@ The useful result is not that every experiment succeeded. It is that the system'
 | Expanded model predictions | `backend/data/grounded_hard_eval/grounded_hard_500_model_predictions.jsonl` |
 | Expanded summary | `backend/data/grounded_hard_eval/grounded_hard_500_eval_summary.json` |
 | Uncertainty-cascade curve | `backend/data/grounded_hard_eval/grounded_hard_500_uncertainty_cascade_curve.csv` |
-| H200 verifier-efficiency script | `verifier_study/3_gold_and_eval/benchmark_verifier_efficiency_h200.py` |
-| H200 verifier-efficiency result | `backend/data/grounded_hard_eval/verifier_efficiency_h200.json` |
 | H200 verifier-efficiency script | `verifier_study/3_gold_and_eval/benchmark_verifier_efficiency_h200.py` |
 | H200 verifier-efficiency result | `backend/data/grounded_hard_eval/verifier_efficiency_h200.json` |
 | Teacher audit | `verifier_study/4_teacher_audit/` |

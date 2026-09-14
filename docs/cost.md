@@ -22,7 +22,7 @@ Measured inputs:
 - saturation throughput: about **18.8 answers/s**
 - H200 price assumption: **$4.00/GPU-hour**
 
-At a deliberately more realistic **40% utilisation**:
+Using an illustrative **40% utilisation assumption**:
 
 - 18.8 answers/s × 0.40 ≈ 7.5 answers/s
 - ≈27,100 answers/GPU-hour

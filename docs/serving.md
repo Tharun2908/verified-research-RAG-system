@@ -1,5 +1,7 @@
 # Serving Benchmark — Mistral-7B on NVIDIA H200 (vLLM)
 
+> **Scope:** this is a separate systems benchmark. Mistral/vLLM is **not** the current live generator; the live demo uses OpenRouter.
+
 Performance characterization of the generation backend served with **vLLM 0.23** on a single
 **NVIDIA H200** (`cl-worker37`). Measures request throughput, output-token throughput, and
 end-to-end latency across concurrency levels, and ablates **fp8 quantization** and **prefix
