@@ -1,0 +1,50 @@
+{
+  "model": "Bespoke-MiniCheck-7B",
+  "protocol": {
+    "binary_positive_class": "UNSUPPORTED",
+    "human_label_field": "human_final_label",
+    "weight_field": "sampling_weight",
+    "cluster_field": "qid",
+    "n_boot": 5000,
+    "seed": 2908,
+    "prefix_caching": false
+  },
+  "sample": {
+    "binary_claims": 101,
+    "unsupported_claims": 15,
+    "supported_claims": 86,
+    "question_clusters": 62,
+    "question_clusters_with_unsupported": 11
+  },
+  "deployed_base": {
+    "precision": 0.2846667060282222,
+    "recall": 0.6892703290000382,
+    "f1": 0.40292607645572576,
+    "weighted_tp": 86.09642857142856,
+    "weighted_fp": 216.35,
+    "weighted_fn": 38.81309523809524,
+    "weighted_tn": 519.3035714285713
+  },
+  "minicheck_7b": {
+    "precision": 0.8686880802168542,
+    "recall": 0.6902710533338416,
+    "f1": 0.7692699869356021,
+    "weighted_tp": 86.22142857142856,
+    "weighted_fp": 13.033333333333331,
+    "weighted_fn": 38.68809523809524,
+    "weighted_tn": 722.6202380952383,
+    "auroc": 0.8814902676933308
+  },
+  "bootstrap": {
+    "valid_replicates": 5000,
+    "minicheck_f1_95_ci": [
+      0.43024345055553936,
+      0.932663282924506
+    ],
+    "f1_difference_minicheck_minus_base": 0.36634391047987636,
+    "difference_95_ci": [
+      0.16336545315484519,
+      0.5402879249229525
+    ]
+  }
+}
