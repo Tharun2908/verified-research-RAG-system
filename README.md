@@ -22,9 +22,9 @@ This system closes that loop. Every answer is decomposed into claims, and each c
 🔴 Unsupported   < 0.45             the evidence does not back this
 ```
 
-A claim citing `[2]` is checked against source 2 — so a claim that cites a source which doesn't actually support it gets caught. An uncited claim is checked against *all* retrieved evidence (fair-chance policy): if nothing supports it, it is genuinely unsupported.
+A claim citing `[2]` is checked against source 2 — so a claim that cites a source which doesn't actually support it gets caught. An uncited claim is checked against *all* retrieved evidence (fair-chance policy): if nothing in the retrieved evidence supports it, it is marked unsupported relative to the available context.
 
-**The verifier is the contribution.** Generation is a hosted LLM call; anyone can do that. Building a verifier that catches unsupported claims — and knowing precisely how well it does and does not work — is the work.
+**The contribution is the evaluation and audit loop around grounded generation.** The system does not just attach a verifier and report one score; it tests whether the verifier, labels, splits, sampling protocol, fusion logic, and serving measurements are themselves trustworthy. That process caught leakage, noisy teacher labels, a misleading evaluation set, a harmful fusion model, and a benchmark artifact — and the failed variants are kept as part of the evidence rather than hidden.
 
 ---
 
@@ -51,15 +51,17 @@ answer + per-claim grounding scores + unsupported-claim rate
 
 **Stack:** FastAPI · Postgres · Qdrant · Redis · BM25 · vLLM (benchmarks) · Prometheus/Grafana · Docker · Kubernetes (H200)
 
+The diagram above is the **current live path**. MiniCheck-7B and the cascade results below are evaluation results; they have not yet replaced the deployed DeBERTa verifier.
+
 ---
 
-## The verifier: what worked, what didn't
+## Verification study: what worked, what failed, what we learned
 
 📄 **[Full writeup: `docs/verifier.md`](docs/verifier.md)** · 🔬 **[Scripts: `verifier_study/`](verifier_study/)**
 
 The verifier began as my thesis entailment model (DeBERTa, trained on RAGTruth). On scientific text it **under-flagged** — removal recall of 19.4%. Handed an obvious fabrication ("RAG was invented in 1995 by a secret government laboratory and requires quantum hardware"), it returned `P(unsupported) = 0.03`. It rubber-stamped a hallucination.
 
-**What fixed it.** Continued fine-tuning on SciFact + HealthVer over a **custom leakage-safe grouped split** — connected components over the claim↔abstract graph, so no claim *or abstract* crosses train/eval. (The datasets' native splits leak abstracts across splits; I checked rather than assumed.)
+**What fixed that specific failure.** Continued fine-tuning on SciFact + HealthVer over a **custom leakage-safe grouped split** — connected components over the claim↔abstract graph, so no claim *or abstract* crosses train/eval. (The datasets' native splits leak abstracts across splits; I checked rather than assumed.)
 
 ```
                                         before      after
@@ -75,10 +77,16 @@ ECE                                       0.058  →   0.19     ← calibration 
 - The first dataset was **96% contaminated**. Splitting by top-1 retrieved paper protects a retrieval *summary*, not the evidence universe claims actually attach to. Caught by a stricter audit; rebuilt with a protected-paper split (verified: 11,794 evidence attachments, **0** protected overlap).
 - An independent audit of **all 477** claims the teacher labelled unsupported found **218 were actually supported** — 46% false-positive contamination — confirmed by blind human review at 94.3% agreement.
 - The evaluation set was measuring the wrong thing: 71 of its 75 unsupported claims were *bait* (trivially off-topic); only 4 were subtle grounded overclaims. A **grounded-hard** stress test was built and human-reviewed.
-- A fusion that *appeared* to help was an artifact. Under question-grouped **out-of-fold stacking** with a **clustered bootstrap**, it was reliably **worse**:−0.074 Binary F1 (unsupported class, design-weighted), 95% CI [−0.131, −0.018].
+- A fusion that *appeared* to help was an artifact. Under question-grouped **out-of-fold stacking** with a **clustered bootstrap**, it was reliably **worse**: −0.074 Binary F1 (unsupported class, design-weighted), 95% CI [−0.131, −0.018].
 - The auto-cleaning procedure was **pre-registered with an acceptance threshold — and failed it**. No cleaned retrain was run.
 
-**The unadapted verifier won** ( Binary F1 (unsupported class, design-weighted): 0.403, AUROC 0.788 on grounded-hard) and is what ships. Three weeks produced a *better-understood* verifier, not a better one — and the decision was not to deploy the worse model.
+**Among the lightweight variants, the unadapted SciFact/HealthVer verifier performed best** on grounded-hard (Binary F1 0.403, AUROC 0.788), so the worse arXiv-adapted variants were not deployed.
+
+A stronger external baseline changed the picture. **Bespoke-MiniCheck-7B** reached precision 0.869, recall 0.690, Binary F1 **0.769**, and AUROC **0.881** on the same 101 human-reviewed binary claims. Its paired question-clustered F1 improvement over the deployed DeBERTa was **+0.366**, 95% CI **[+0.163, +0.540]**. The gain came almost entirely from removing false positives: weighted false-positive mass fell from 216.35 to 13.03 while recall stayed essentially unchanged.
+
+That led to two routing experiments. A generic **uncertainty cascade failed**: even escalating 75.2% of claims to MiniCheck reached only F1 0.529, showing that even escalating 75.2% of claims to MiniCheck reached only F1 0.529, suggesting that DeBERTa's errors were not concentrated near its decision threshold. A more targeted **confirmation cascade** worked much better: accept DeBERTa's `SUPPORTED` decisions, but send every DeBERTa `UNSUPPORTED` decision to MiniCheck for confirmation. It escalated **36/101 claims (35.6%)**, reached precision 0.947, recall 0.621, and F1 **0.750**. The paired F1 gain over DeBERTa was **+0.347**, 95% CI **[+0.167, +0.533]**. Its F1 difference from MiniCheck-only was −0.019, 95% CI [−0.114, +0.102] — not distinguishable on this stress test, but not evidence of equivalence.
+
+These cascade results are **exploratory quality–compute measurements**, not a validated deployment policy. A production routing rule would need independent validation data and a larger hard-positive set.
 
 ---
 
@@ -86,7 +94,10 @@ ECE                                       0.058  →   0.19     ← calibration 
 
 | | |
 |---|---|
-| **Verifier** (custom leakage-safe grouped SciFact+HealthVer test) | recall 0.84 · precision 0.71 · F1 0.77 · AUROC 0.71 · ECE 0.19 |
+| **Lightweight verifier** (custom leakage-safe grouped SciFact+HealthVer test) | recall 0.84 · precision 0.71 · F1 0.77 · AUROC 0.71 · ECE 0.19 |
+| **Grounded-hard: deployed DeBERTa** | precision 0.285 · recall 0.689 · Binary F1 **0.403** · AUROC 0.788 |
+| **Grounded-hard: MiniCheck-7B** | precision 0.869 · recall 0.690 · Binary F1 **0.769** · AUROC **0.881** |
+| **Grounded-hard: confirmation cascade** | MiniCheck on **35.6%** of claims · precision 0.947 · recall 0.621 · Binary F1 **0.750** |
 | **Serving** (vLLM, H200, Mistral-7B) | fp8 vs bf16: **+33–39% throughput** at all concurrencies (prefill-bound) |
 | | best: **18.8 req/s · 2,599 tok/s · p99 5.8 s** @ concurrency 64 |
 | | prefix caching: **~0%** on unique-prompt RAG traffic (only ~3.5% shared prefix — an earlier "+46%" was a benchmarking artifact from accidentally repeated prompts) |
@@ -97,7 +108,7 @@ ECE                                       0.058  →   0.19     ← calibration 
 | **Cost** | ~**$0.15 per 1,000 answers** at $4/hr GPU, 40% utilisation (generation only) |
 | | *utilisation dominates GPU price* — the headline finding |
 
-**What is reproducible from this repo:** the M8 evaluation (409 claims), the serving benchmarks, and the grounded-hard model comparison — the human labels, per-model predictions, metrics, and bootstrap CIs are committed under `backend/data/`. **What is not:** model checkpoints (they live on [HuggingFace](https://huggingface.co/Primeinvincible/scifact-healthver-verifier)), the full 1,245-claim generation pool, and the raw bootstrap replicates. Fine-tuning scripts assume a cluster workspace. This is *documented provenance plus reproducible headline results* — not a one-command rebuild of everything.
+**What is reproducible from this repo:** the M8 evaluation (409 claims), the serving benchmarks, the grounded-hard model comparison, the MiniCheck-7B baseline, and both cascade analyses — the human labels, per-model predictions, metrics, and bootstrap CIs are committed under `backend/data/`. **What is not:** model checkpoints (the deployed DeBERTa checkpoint lives on [HuggingFace](https://huggingface.co/Primeinvincible/scifact-healthver-verifier)), the full 1,245-claim generation pool, and the raw bootstrap replicates. Fine-tuning scripts assume a cluster workspace. This is *documented provenance plus reproducible headline results* — not a one-command rebuild of everything.
 
 ---
 
@@ -203,14 +214,14 @@ the first thing to consolidate.
 
 ## Honest limitations
 
-- **The verifier is not calibrated.** ECE ≈ 0.19. Scores are useful as labels and rankings, **not** as probabilities.
-- **It is recall-oriented** and over-flags partially-grounded claims. For a safety-oriented verifier that is the intended bias; it still means false positives.
-- **Domain gap remains.** The deployed verifier is trained on biomedical claim-verification data and serves a CS/ML corpus. The attempt to close that gap is documented — it failed.
+- **The deployed DeBERTa verifier is not calibrated.** ECE ≈ 0.19. Scores are useful as labels and rankings, **not** as probabilities.
+- **The deployed verifier is recall-oriented and over-flags.** On grounded-hard, its Binary F1 falls to 0.403 with precision 0.285 despite recall 0.689. MiniCheck-7B is substantially stronger on the same claims, but it is not yet the live verifier.
+- **The confirmation cascade is exploratory.** F1 0.750 with 35.6% MiniCheck escalation is a post-hoc quality–compute result on this stress test, not a validated production routing policy.
+- **Domain gap remains.** The deployed verifier is trained on biomedical claim-verification data and serves a CS/ML corpus. The attempt to close that gap with in-domain distillation is documented — it failed.
 - **Custom splits.** SciFact/HealthVer numbers come from a custom leakage-safe grouped split and are **not** comparable to published benchmark results.
 - **Claim extraction is its own failure mode.** Human review measured a 6.7% extraction-failure rate, independent of verifier accuracy. Fixed (structural segmentation, abbreviation masking) and now regression-tested — but in any claim-level pipeline, extraction quality must be monitored *separately* from verifier quality, or extraction bugs get misattributed to the model.
-- **The grounded-hard evaluation is a deliberately enriched stress test** (101 binary claims, 15 unsupported, across 62 question clusters — 11 of which contain at
-least one unsupported claim), not an estimate of production prevalence. Absolute intervals are wide; paired comparisons are more stable.
-- **The demo's generator is not the evaluated generator.** The offline evaluation used self-hosted Mistral-7B; it is no longer served on OpenRouter, so the live path uses a current hosted model. The verifier is the same.
+- **The grounded-hard evaluation is a deliberately enriched stress test** (101 binary claims, 15 unsupported, across 62 question clusters — 11 of which contain at least one unsupported claim), not an estimate of production prevalence. Absolute intervals are wide; paired comparisons are more stable. The unsupported class is still too small for strong deployment claims.
+- **The demo's generator is not the evaluated generator.** The offline evaluation used self-hosted Mistral-7B; it is no longer served on OpenRouter, so the live path uses a current hosted model. The deployed verifier is the same DeBERTa checkpoint described above.
 - **This is a research and serving prototype, not a production service.** No auth, no rate limiting, no CI, no migrations. `/verify` is an unauthenticated GET that writes to the database. The serving *benchmarks* are real (measured on an H200); the *operational* hardening is not there.
 
 ---
