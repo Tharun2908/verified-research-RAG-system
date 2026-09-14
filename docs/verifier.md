@@ -251,7 +251,18 @@ Stronger offline result, not yet the live path:
 
 The deployed S4 remains the current live verifier because it is already integrated, lightweight, and operationally simple. The expanded evaluation shows that **MiniCheck-7B is the stronger verifier offline**, so the deployment choice should no longer be read as evidence that DeBERTa is the best available model. Moving MiniCheck or the confirmation cascade into the live path would be a separate systems decision requiring latency/cost characterization and an independently validated routing policy.
 
-The live interface still exposes `support_score = 1 − P(unsupported)`, mapped to three bands (≥0.70 Supported · 0.45–0.69 Weak · <0.45 Unsupported). These bands are interface heuristics rather than calibrated probabilities; threshold validation is a remaining deployment task.
+The live interface now uses the **same frozen binary operating point as the evaluation**:
+`P(unsupported) >= 0.06 -> Unsupported`, otherwise `Supported`. The 0.06 threshold was selected
+on the held-out leakage-safe grouped SciFact+HealthVer validation split by unsupported-class F1,
+then frozen before grouped test and grounded-hard evaluation; the grounded-hard labels were not
+used to tune it. Since the public interface exposes `support_score = 1 - P(unsupported)`, the
+equivalent rule is `support_score <= 0.94 -> Unsupported`.
+
+The previous `Supported / Weak / Unsupported` UI bands were removed because only one decision
+threshold had actually been validated. With ECE ≈ 0.19, neither `P(unsupported)` nor
+`support_score` should be read as a literal probability/confidence value; the score is retained
+for ranking and auditability, while the binary label uses the frozen validation-selected
+operating point.
 
 ---
 

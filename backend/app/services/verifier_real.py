@@ -40,6 +40,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 from app.services.verifier import Verifier
+from app.services.decision_policy import P_UNSUPPORTED_THRESHOLD
 
 HF_MODEL_ID = "Primeinvincible/scifact-healthver-verifier"
 
@@ -106,6 +107,12 @@ class RealVerifier(Verifier):
             "implementation": "RealVerifier",
             "model": self.model_source,
             "revision": self.model_revision,
+            "decision_policy": {
+                "positive_class": "unsupported",
+                "p_unsupported_threshold": P_UNSUPPORTED_THRESHOLD,
+                "selected_on": "grouped SciFact+HealthVer validation F1",
+                "calibrated_probability": False,
+            },
         }
 
     def _p_unsupported(self, claim: str, evidence: str) -> float:

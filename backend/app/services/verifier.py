@@ -18,10 +18,13 @@ Contract (both implementations satisfy it):
     verify(claim_text, evidence_text) -> support_score in [0, 1]   (higher = more supported)
     describe() -> dict                                             (component metadata)
 
-Label bands (on support_score):
-    >= 0.70   Supported     (green)
-    0.45-0.69 Weak          (amber)
-    <  0.45   Unsupported   (red)
+Decision policy:
+    P(unsupported) >= 0.06  -> Unsupported
+    P(unsupported) <  0.06  -> Supported
+
+The 0.06 operating point was selected on the held-out grouped
+SciFact+HealthVer validation split and then frozen. The raw score is not a
+calibrated probability.
 """
 
 from __future__ import annotations
@@ -30,18 +33,11 @@ import asyncio
 import os
 import re
 
-# --- label thresholds -------------------------------------------------------
-SUPPORTED_THRESHOLD = 0.70
-WEAK_THRESHOLD = 0.45
-
-
-def label_for_score(score: float) -> str:
-    """Map a support score to a label band."""
-    if score >= SUPPORTED_THRESHOLD:
-        return "Supported"
-    if score >= WEAK_THRESHOLD:
-        return "Weak"
-    return "Unsupported"
+from app.services.decision_policy import (
+    P_UNSUPPORTED_THRESHOLD,
+    SUPPORT_SCORE_CUTOFF,
+    label_for_score,
+)
 
 
 # --- verifier interface -----------------------------------------------------

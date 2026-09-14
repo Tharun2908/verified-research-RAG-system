@@ -36,6 +36,7 @@ from sentence_transformers import SentenceTransformer, CrossEncoder
 from rank_bm25 import BM25Okapi
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from claim_extractor import extract_claims
+from decision_policy import P_UNSUPPORTED_THRESHOLD, label_for_score
 
 # ----------------------------------------------------------------------------- config
 VERIFIER_REPO = "Primeinvincible/scifact-healthver-verifier"
@@ -54,7 +55,6 @@ OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 CANDIDATE_POOL = 30
 TOP_K = 4
 MAX_LENGTH = 512
-SUPPORTED_T, WEAK_T = 0.70, 0.45
 DEVICE = "cpu"   # CPU-only: models are small (DeBERTa-base + 2x MiniLM); no GPU needed,
                  # which makes the Space reliable (no ZeroGPU quota/queue failures).
 
@@ -67,14 +67,6 @@ DEVICE = "cpu"   # CPU-only: models are small (DeBERTa-base + 2x MiniLM); no GPU
 def _zerogpu_startup_probe():
     """Exists only to satisfy ZeroGPU's startup requirement. Not used by the pipeline."""
     return "ok"
-
-
-def label_for_score(s: float) -> str:
-    if s >= SUPPORTED_T:
-        return "Supported"
-    if s >= WEAK_T:
-        return "Weak"
-    return "Unsupported"
 
 
 # ---------------------------------------------------------------- ZeroGPU shim
@@ -208,7 +200,7 @@ def verify_claims(claims, evidence):
 
 
 # ------------------------------------------------------------------------- pipeline
-BADGE = {"Supported": "🟢", "Weak": "🟡", "Unsupported": "🔴", "Abstention": "⚪"}
+BADGE = {"Supported": "🟢", "Unsupported": "🔴", "Abstention": "⚪"}
 
 
 def run(query):
@@ -258,8 +250,10 @@ def run(query):
     grounding = (
         f"### Grounding report\n"
         f"{headline}{abst_note}\n"
-        f"- <sub>generator: `{model_used}` · verifier: fine-tuned DeBERTa</sub>\n\n"
-        f"| Verdict | Support | Cites | Claim |\n|---|---|---|---|\n" + "\n".join(rows)
+        f"- <sub>generator: `{model_used}` · verifier: fine-tuned DeBERTa · "
+        f"binary cutoff: P(unsupported) ≥ {P_UNSUPPORTED_THRESHOLD:.2f}</sub>\n"
+        f"- <sub>support score is an uncalibrated ranking score, not a probability</sub>\n\n"
+        f"| Verdict | Support score | Cites | Claim |\n|---|---|---|---|\n" + "\n".join(rows)
     )
     src = "### Retrieved evidence\n" + "\n".join(
         f"**[{i+1}]** {e['title']}  \n<sub>{e['text'][:280]}…</sub>"
@@ -281,7 +275,7 @@ with gr.Blocks(title="Verified Research RAG") as demo:
         "The system retrieves evidence, generates a cited answer, then **verifies every claim "
         "against the evidence it cites** with a fine-tuned faithfulness verifier — and reports "
         "how much of its own answer is actually grounded.\n\n"
-        "🟢 Supported · 🟡 Weak · 🔴 Unsupported · ⚪ Abstention (the model correctly said the "
+        "🟢 Supported · 🔴 Unsupported · ⚪ Abstention (the model correctly said the "
         "sources don't cover it) — *try the third example: it asks about "
         "something the corpus doesn't cover.*"
     )
@@ -297,8 +291,9 @@ with gr.Blocks(title="Verified Research RAG") as demo:
         "---\n"
         "**Honest limitations.** Generation is a hosted LLM call — the *verifier* is the "
         "contribution, not the generator. The verifier (DeBERTa, fine-tuned on a leakage-safe "
-        "SciFact+HealthVer split) is recall-oriented and imperfectly calibrated: scores are "
-        "useful as labels/rankings, not literal probabilities. A rigorous in-domain adaptation "
+        "SciFact+HealthVer split) is recall-oriented and imperfectly calibrated. The binary "
+        "decision uses the validation-selected P(unsupported) ≥ 0.06 cutoff; the displayed "
+        "support score is useful for ranking, not as a literal probability. A rigorous in-domain adaptation "
         "study produced a *negative* result — see the repo write-up."
     )
 

@@ -7,7 +7,7 @@ against the evidence IT CITES -> persist -> report the unsupported-claim rate.
 Flow:
   1. generate_answer          -> cited answer + numbered evidence  (raises GenerationError)
   2. extract_claims           -> atomic claims, each with its citation numbers
-  3. verify each claim        -> support_score, then a label band
+  3. verify each claim        -> support_score, then the frozen binary decision rule
   4. unsupported_claim_rate   -> the headline metric
   5. persist across four tables, atomically
 
@@ -127,7 +127,7 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
     claims = extract_claims(answer)     # [{claim_text, citations}]
     metrics.STAGE_LATENCY.labels(stage="extract").observe(time.perf_counter() - extract_start)
 
-    # --- 3: score + label every claim ----------------------------------------
+    # --- 3: score + classify every claim -------------------------------------
     # The real verifier is a DeBERTa forward pass per claim: synchronous, ~100s of ms each.
     # Running that inline would block the event loop for the whole request. All claims are
     # scored in ONE worker thread — one hop, not N.

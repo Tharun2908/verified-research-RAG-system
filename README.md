@@ -17,10 +17,18 @@ Most RAG systems retrieve, generate, and stop. Whether the answer is actually su
 This system closes that loop. Every answer is decomposed into claims, and each claim is scored against **the evidence it cites**:
 
 ```
-🟢 Supported     support ≥ 0.70     the cited evidence backs this
-🟡 Weak          0.45 – 0.69        partial / uncertain support
-🔴 Unsupported   < 0.45             the evidence does not back this
+🟢 Supported     P(unsupported) < 0.06
+🔴 Unsupported   P(unsupported) ≥ 0.06
+⚪ Abstention    refusal / source-absence statement; excluded from the binary rate
 ```
+
+The **0.06 unsupported threshold is not a hand-picked UI cutoff**. It was selected on the
+held-out leakage-safe grouped SciFact+HealthVer validation split and frozen before test and
+grounded-hard evaluation. The displayed `support_score = 1 - P(unsupported)` is therefore
+thresholded at the equivalent boundary `support_score <= 0.94 → Unsupported`. Because the
+verifier is imperfectly calibrated (ECE ≈ 0.19), the numeric score is a ranking signal, **not
+a literal probability or confidence percentage**. The earlier unvalidated `Supported / Weak /
+Unsupported` bands were removed rather than pretending a second cutoff had empirical support.
 
 A claim citing `[2]` is checked against source 2 — so a claim that cites a source which doesn't actually support it gets caught. An uncited claim is checked against *all* retrieved evidence (fair-chance policy): if nothing in the retrieved evidence supports it, it is marked unsupported relative to the available context.
 
@@ -160,8 +168,8 @@ stub and prints a wall of warnings. `DEV_STUB_VERIFIER=true` swaps in a lexical-
 for model-free development — and says so. Both defaults are *real*; you have to opt out.
 
 ```bash
-pytest tests/ -v    # 61 tests. No database or models required.
-#   claim extraction, citation mapping, label bands, rate maths
+pytest tests/ -v    # 62 tests. No database or models required.
+#   claim extraction, citation mapping, frozen decision threshold, rate maths
 #   generation failure -> typed error -> HTTP 503
 #   stub components are machine-detectable
 #   model source resolution (pinned Hub revision / local override)
@@ -180,7 +188,8 @@ backend/                  the application (FastAPI service + evaluation harness)
       generator.py        prompt assembly
       generation_client.py  OpenRouter (real) | stub (explicit opt-in)
       claim_extractor.py  structural + sentence segmentation
-      verifier.py         interface, label bands, verifier selection
+      decision_policy.py  validation-selected binary operating point
+      verifier.py         interface + verifier selection
       verifier_real.py    the deployed verifier (fine-tuned DeBERTa)
       verification_service.py  the pipeline + persistence
     db/                   Postgres + Qdrant

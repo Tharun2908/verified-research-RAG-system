@@ -2,7 +2,7 @@
 backend/tests/test_claim_pipeline.py
 
 Unit tests for the pure-function core of the verification pipeline: claim extraction,
-citation→evidence mapping, label banding, and the unsupported-rate calculation.
+citation→evidence mapping, the frozen decision threshold, and unsupported-rate calculation.
 
 No models, no database, no network — these run in milliseconds and are the regression net
 for the parts most likely to break silently (a bad sentence split or a mis-mapped citation
@@ -21,34 +21,32 @@ import pytest
 # on a running Postgres and ~100MB of downloads to test a dict-to-string function.
 from app.services.claim_extractor import extract_claims
 from app.services.evidence_mapping import evidence_text_for_claim as _evidence_text_for_claim
-from app.services.verifier import (
-    StubVerifier,
-    label_for_score,
-    SUPPORTED_THRESHOLD,
-    WEAK_THRESHOLD,
+from app.services.verifier import StubVerifier, label_for_score
+from app.services.decision_policy import (
+    P_UNSUPPORTED_THRESHOLD,
+    SUPPORT_SCORE_CUTOFF,
 )
 
 
-# ---------------------------------------------------------------- label bands
-class TestLabelBands:
-    def test_supported_at_and_above_threshold(self):
-        assert label_for_score(SUPPORTED_THRESHOLD) == "Supported"
+# ------------------------------------------------------ verifier decision rule
+class TestVerifierDecisionPolicy:
+    def test_frozen_validation_threshold_is_explicit(self):
+        assert P_UNSUPPORTED_THRESHOLD == pytest.approx(0.06)
+        assert SUPPORT_SCORE_CUTOFF == pytest.approx(0.94)
+
+    def test_supported_above_support_cutoff(self):
         assert label_for_score(0.95) == "Supported"
         assert label_for_score(1.0) == "Supported"
 
-    def test_weak_between_thresholds(self):
-        assert label_for_score(WEAK_THRESHOLD) == "Weak"
-        assert label_for_score(0.60) == "Weak"
-        assert label_for_score(SUPPORTED_THRESHOLD - 0.01) == "Weak"
-
-    def test_unsupported_below_weak(self):
-        assert label_for_score(WEAK_THRESHOLD - 0.01) == "Unsupported"
+    def test_unsupported_at_and_below_support_cutoff(self):
+        # P(unsupported) >= 0.06 is the positive decision, so support <= 0.94 is red.
+        assert label_for_score(SUPPORT_SCORE_CUTOFF) == "Unsupported"
+        assert label_for_score(0.50) == "Unsupported"
         assert label_for_score(0.0) == "Unsupported"
 
-    def test_boundaries_are_inclusive_lower(self):
-        """A score exactly on a threshold takes the HIGHER band."""
-        assert label_for_score(0.70) == "Supported"
-        assert label_for_score(0.45) == "Weak"
+    def test_no_unvalidated_weak_band(self):
+        labels = {label_for_score(x) for x in (0.0, 0.50, 0.94, 0.95, 1.0)}
+        assert labels == {"Supported", "Unsupported"}
 
 
 # ------------------------------------------------------------ claim extraction
@@ -187,9 +185,13 @@ class TestUnsupportedRate:
 
     @staticmethod
     def _rate(labels):
-        if not labels:
+        substantive = [l for l in labels if l != "Abstention"]
+        if not substantive:
             return None
-        return sum(1 for l in labels if l == "Unsupported") / len(labels)
+        return (
+           sum(1 for l in substantive if l == "Unsupported")
+        / len(substantive)
+        )
 
     def test_all_supported(self):
         assert self._rate(["Supported", "Supported"]) == 0.0
@@ -198,11 +200,13 @@ class TestUnsupportedRate:
         assert self._rate(["Unsupported", "Unsupported"]) == 1.0
 
     def test_mixed(self):
-        assert self._rate(["Supported", "Unsupported", "Weak", "Unsupported"]) == 0.5
+        assert self._rate(
+          ["Supported", "Unsupported", "Supported", "Unsupported"]
+    ) == 0.5
 
-    def test_weak_is_not_counted_as_unsupported(self):
-        """Weak = retained. Only Unsupported counts against the rate."""
-        assert self._rate(["Weak", "Weak"]) == 0.0
+    def test_abstentions_are_excluded_from_rate(self):
+        assert self._rate(["Abstention", "Unsupported"]) == 1.0
+        assert self._rate(["Abstention"]) is None
 
     def test_no_claims_is_none_not_zero(self):
         assert self._rate([]) is None
