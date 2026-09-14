@@ -279,3 +279,75 @@ class TestGenerationFailureDoesNotLoadTheVerifier:
         comps = _components_generation_failed()
         assert comps["verifier"]["implementation"] == "not_invoked"
         assert "generator" in comps
+
+
+class TestAbstentionHandling:
+    def test_all_abstention_answer_is_not_scored_or_reported_as_zero_percent(
+        self, client, monkeypatch
+    ):
+        async def fake_generate(question: str, top_k: int = 5):
+            return {
+                "question": question,
+                "answer": "The provided sources do not discuss quantum computing.",
+                "evidence": [{
+                    "number": 1,
+                    "title": "RAG paper",
+                    "text": "This paper discusses retrieval-augmented generation.",
+                    "chunk_id": 1,
+                }],
+            }
+
+        calls = []
+
+        class SpyVerifier:
+            def verify(self, claim_text, evidence_text):
+                calls.append((claim_text, evidence_text))
+                raise AssertionError("abstentions must not be sent to the verifier")
+
+            def describe(self):
+                return {"implementation": "RealVerifier", "model": "m", "revision": "r"}
+
+        class FakeGenerator:
+            def describe(self):
+                return {"implementation": "OpenRouterClient", "model": "fake-model"}
+
+        class NoopSession:
+            async def __aenter__(self):
+                return self
+            async def __aexit__(self, *a):
+                return False
+            def add(self, obj):
+                pass
+            async def flush(self):
+                pass
+            async def commit(self):
+                pass
+
+        monkeypatch.setattr(
+            "app.services.verification_service.generate_answer", fake_generate
+        )
+        monkeypatch.setattr(
+            "app.services.verification_service.get_verifier", lambda: SpyVerifier()
+        )
+        monkeypatch.setattr(
+            "app.services.verification_service.generation_client", FakeGenerator()
+        )
+        monkeypatch.setattr(
+            "app.services.verification_service.AsyncSessionLocal",
+            lambda: NoopSession(),
+        )
+
+        r = client.get("/verify", params={"q": "quantum?"})
+        assert r.status_code == 200
+        body = r.json()
+
+        assert calls == []
+        assert body["verification_status"] == "abstained"
+        assert body["n_claims"] == 1
+        assert body["n_substantive_claims"] == 0
+        assert body["n_abstentions"] == 1
+        assert body["n_unsupported"] == 0
+        assert body["unsupported_claim_rate"] is None
+        assert body["grounding_score"] is None
+        assert body["claims"][0]["label"] == "Abstention"
+        assert body["claims"][0]["support_score"] is None

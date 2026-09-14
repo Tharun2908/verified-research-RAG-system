@@ -160,7 +160,7 @@ stub and prints a wall of warnings. `DEV_STUB_VERIFIER=true` swaps in a lexical-
 for model-free development — and says so. Both defaults are *real*; you have to opt out.
 
 ```bash
-pytest tests/ -v    # 56 tests. No database or models required.
+pytest tests/ -v    # 61 tests. No database or models required.
 #   claim extraction, citation mapping, label bands, rate maths
 #   generation failure -> typed error -> HTTP 503
 #   stub components are machine-detectable
@@ -204,11 +204,11 @@ over the 250 abstracts) instead of Postgres and Qdrant, because a free CPU Space
 them. It uses the same retrieval design (BM25 + dense → RRF → cross-encoder rerank) and the
 same verifier checkpoint.
 
-The two extractors have **partially diverged**: the demo has abstention detection (which the
-backend lacks) and the backend has structural list/block segmentation (which the demo lacks).
-Both are fixes to real, separately-observed failures; neither has been ported across yet.
-This is a known duplication cost of maintaining a second, dependency-free target, and it is
-the first thing to consolidate.
+The Space remains a standalone deployment target, so it carries a mirrored copy of the pure
+claim-extraction module rather than importing the backend package. The two copies now have the
+same structural segmentation, abbreviation handling, citation cleanup, and abstention detection;
+CI asserts they remain byte-for-byte identical. Abstention statements stay visible in results but
+are not sent to the binary verifier and are excluded from unsupported-rate calculations.
 
 ---
 
@@ -222,7 +222,7 @@ the first thing to consolidate.
 - **Claim extraction is its own failure mode.** The expanded 500-row human review marked 39 rows as invalid extractions (7.8% raw), independent of verifier accuracy. Fixed (structural segmentation, abbreviation masking) and now regression-tested — but in any claim-level pipeline, extraction quality must be monitored *separately* from verifier quality, or extraction bugs get misattributed to the model.
 - **The grounded-hard evaluation is a deliberately enriched stress test**, not an estimate of production prevalence. The expanded human review contains 500 rows; after excluding 122 abstentions and 39 invalid extractions, binary evaluation uses **339 claims with 51 unsupported**. This materially strengthens the positive-class evidence over the original 101-claim / 15-unsupported tranche, but it still should not be interpreted as production prevalence.
 - **The demo's generator is not the evaluated generator.** The offline evaluation used self-hosted Mistral-7B; it is no longer served on OpenRouter, so the live path uses a current hosted model. The deployed verifier is the same DeBERTa checkpoint described above.
-- **This is a research and serving prototype, not a production service.** No auth, no rate limiting, no CI, no migrations. `/verify` is an unauthenticated GET that writes to the database. The serving *benchmarks* are real (measured on an H200); the *operational* hardening is not there.
+- **This is a research and serving prototype, not a production service.** No auth, no rate limiting, no migrations. CI covers the model-free backend test suite, but not live model-serving or external-service integration. `/verify` is an unauthenticated GET that writes to the database. The serving *benchmarks* are real (measured on an H200); the *operational* hardening is not there.
 
 ---
 

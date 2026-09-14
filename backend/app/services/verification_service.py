@@ -84,7 +84,8 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
     and scores, and the unsupported_claim_rate.
 
     verification_status is one of:
-        "verified"           real components, claims extracted and scored
+        "verified"           real components, substantive claims extracted and scored
+        "abstained"          extracted claims are all correct refusal/meta statements
         "development_stub"   a stub verifier and/or generator was used — scores are NOT real
         "unverifiable"       no claims could be extracted, so nothing was verified
         "generation_failed"  generation was unavailable; nothing was generated or verified
@@ -109,6 +110,8 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
             "error": str(e),
             "components": _components_generation_failed(),
             "n_claims": 0,
+            "n_substantive_claims": 0,
+            "n_abstentions": 0,
             "n_unsupported": 0,
             "unsupported_claim_rate": None,
             "grounding_score": None,
@@ -131,20 +134,35 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
     verify_start = time.perf_counter()
     verifier = get_verifier()
 
-    def _score_all() -> list[float]:
-        """Runs in a worker thread. No event loop, no awaits, no DB."""
-        return [
-            verifier.verify(
-                c["claim_text"],
-                _evidence_text_for_claim(c["citations"], evidence),
+    def _score_all() -> list[float | None]:
+        """Runs in a worker thread. Abstentions are intentionally not verified."""
+        out: list[float | None] = []
+        for c in claims:
+            if c.get("abstention"):
+                out.append(None)
+                continue
+            out.append(
+                verifier.verify(
+                    c["claim_text"],
+                    _evidence_text_for_claim(c["citations"], evidence),
+                )
             )
-            for c in claims
-        ]
+        return out
 
     scores = await asyncio.to_thread(_score_all) if claims else []
 
     scored_claims = []
     for c, score in zip(claims, scores):
+        if c.get("abstention"):
+            scored_claims.append({
+                "claim_text": c["claim_text"],
+                "citations": c["citations"],
+                "support_score": None,
+                "label": "Abstention",
+            })
+            continue
+
+        assert score is not None
         label = label_for_score(score)
         scored_claims.append({
             "claim_text": c["claim_text"],
@@ -158,23 +176,39 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
     metrics.STAGE_LATENCY.labels(stage="verify").observe(time.perf_counter() - verify_start)
 
     # --- 4: the headline metric ----------------------------------------------
+    # Abstentions are correct refusal/meta statements, not factual claims for a binary
+    # support verifier. Keep them visible, but exclude them from both metric denominators.
     n_claims = len(scored_claims)
+    substantive_claims = [
+        c for c in scored_claims if c["label"] != "Abstention"
+    ]
+    n_substantive = len(substantive_claims)
+    n_abstentions = n_claims - n_substantive
+
     if n_claims == 0:
-        # Nothing was extracted -> NOTHING was verified. Reporting a 0% unsupported rate here
-        # would masquerade as a perfectly-grounded answer.
         verification_status = "unverifiable"
+        n_unsupported = 0
+        unsupported_rate = None
+        grounding_score = None
+    elif n_substantive == 0:
+        verification_status = "abstained"
         n_unsupported = 0
         unsupported_rate = None
         grounding_score = None
     else:
         verification_status = "verified"
-        n_unsupported = sum(1 for c in scored_claims if c["label"] == "Unsupported")
-        unsupported_rate = n_unsupported / n_claims
-        grounding_score = sum(c["support_score"] for c in scored_claims) / n_claims
+        n_unsupported = sum(
+            1 for c in substantive_claims if c["label"] == "Unsupported"
+        )
+        unsupported_rate = n_unsupported / n_substantive
+        grounding_score = (
+            sum(float(c["support_score"]) for c in substantive_claims)
+            / n_substantive
+        )
 
     # If a stub produced any of this, it is not a real verification and must not say it is.
     components = _components()
-    if _is_degraded(components) and verification_status == "verified":
+    if _is_degraded(components) and verification_status in {"verified", "abstained"}:
         verification_status = "development_stub"
 
     if unsupported_rate is not None:
@@ -238,6 +272,8 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
         "verification_status": verification_status,
         "components": components,
         "n_claims": n_claims,
+        "n_substantive_claims": n_substantive,
+        "n_abstentions": n_abstentions,
         "n_unsupported": n_unsupported,
         "unsupported_claim_rate": (
             round(unsupported_rate, 4) if unsupported_rate is not None else None

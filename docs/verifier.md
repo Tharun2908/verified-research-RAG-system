@@ -259,7 +259,7 @@ The live interface still exposes `support_score = 1 − P(unsupported)`, mapped 
 
 The original 150-row grounded-hard review found **10 invalid claim extractions (6.7%)**. The expanded 500-row review found **39 invalid extractions (7.8%)**, confirming that extraction is a persistent failure mode independent of verifier accuracy. Sentence-splitting on `.` breaks on `vs.`, `e.g.`, `et al.`; the verifier then dutifully scores a sentence *fragment* and flags it unsupported. The verifier may be behaving consistently; the input itself is malformed.
 
-This is visible in the live demo and was fixed there (abbreviation-masked splitting, markdown stripping, citation-debris cleanup). The general lesson: **in a claim-level verification pipeline, extraction quality must be monitored separately from verifier quality**, or extraction failures will be misattributed to the model.
+The fix is now aligned across the backend and standalone live demo: abbreviation-masked sentence splitting, structural list/block segmentation, markdown stripping, citation-debris cleanup, and explicit abstention detection. The demo carries a mirrored pure extractor module because it is deployed independently, and CI asserts that mirror stays identical to the backend version. The general lesson: **in a claim-level verification pipeline, extraction quality must be monitored separately from verifier quality**, or extraction failures will be misattributed to the model.
 
 ---
 

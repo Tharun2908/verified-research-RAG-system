@@ -35,6 +35,7 @@ import torch
 from sentence_transformers import SentenceTransformer, CrossEncoder
 from rank_bm25 import BM25Okapi
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from claim_extractor import extract_claims
 
 # ----------------------------------------------------------------------------- config
 VERIFIER_REPO = "Primeinvincible/scifact-healthver-verifier"
@@ -125,99 +126,6 @@ def rrf(rank_lists, k=60, top_k=CANDIDATE_POOL):
     return [d for d, _ in sorted(scores.items(), key=lambda x: -x[1])[:top_k]]
 
 
-_SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z\[])")
-_CITATION = re.compile(r"\[(\d+)\]")
-
-# Abbreviations whose trailing "." must NOT trigger a sentence split. Without this, the
-# splitter cuts "... (e.g., Wigner-Dyson vs. | Poisson-like statistics) ..." into two
-# fragments and the verifier scores a sentence fragment — a real extraction-failure mode
-# observed in evaluation (~6.7% of rows). We mask them, split, then restore.
-_ABBREVS = ["e.g.", "i.e.", "et al.", "vs.", "cf.", "approx.", "Fig.", "Eq.", "Sec.",
-            "Ref.", "resp.", "etc.", "Dr.", "Prof.", "Inc.", "No.", "al."]
-_MASK = "\u241F"   # unit-separator: won't appear in normal text
-
-
-def _mask_abbrevs(text):
-    for a in _ABBREVS:
-        text = text.replace(a, a.replace(".", _MASK))
-    return text
-
-
-def _unmask(text):
-    return text.replace(_MASK, ".")
-
-
-# Claims that assert the ABSENCE of information are the model correctly ABSTAINING, not
-# hallucinating. They contain no substantive assertion to verify against evidence, so we
-# label them separately and exclude them from the unsupported rate. (Scoring them with a
-# binary support verifier is a category error — it flags a correct refusal as a hallucination.)
-_ABSTENTION_PAT = re.compile(
-    r"(?:"
-    # "<any words> sources/evidence/papers ... do not <verb>"  (allows words + citation debris
-    # between the noun and the verb, e.g. "None of the cited papers (,,, or ) mention ...")
-    r"(?:sources?|evidence|papers?|documents?|abstracts?|context|text|articles?|studies)"
-    r"[^.]{0,60}?\b(?:do|does|did|donot)\s*n[o']?t\b"
-    r"[^.]{0,20}?\b(?:contain|discuss|mention|address|cover|provide|include|specify|state|"
-    r"describe|report|say|indicate)"
-    r"|"
-    # "none of the ... sources/papers ... mention/discuss/..."
-    r"\bnone\s+of\s+the\b[^.]{0,60}?"
-    r"\b(?:mention|discuss|contain|address|cover|provide|include|specify|state|describe|"
-    r"report|say|indicate)"
-    r"|"
-    # "no information / not enough information / insufficient information"
-    r"\b(?:no|not\s+enough|insufficient)\s+(?:relevant\s+)?information\b"
-    r"|"
-    # "cannot be answered / cannot answer / unable to answer|determine|find"
-    r"\b(?:cannot|can'?t|could\s*n[o']?t|unable\s+to)\s+(?:be\s+)?"
-    r"(?:answer|determin|find|establish)"
-    r"|"
-    # "is/are not discussed|mentioned|addressed|covered" (anywhere)
-    r"\b(?:is|are|was|were)\s+not\s+"
-    r"(?:discussed|mentioned|addressed|covered|described|provided|available|present)"
-    r"|"
-    # "there is no mention/discussion/information about"
-    r"\bthere\s+(?:is|are)\s+no\b[^.]{0,30}?"
-    r"\b(?:mention|discussion|information|evidence|reference)"
-    r")",
-    re.IGNORECASE,
-)
-
-
-def is_abstention(text):
-    return bool(_ABSTENTION_PAT.search(text))
-
-
-def extract_claims(answer):
-    """Sentence split, [n] markers -> citations, abbreviation-safe, abstention-aware."""
-    claims = []
-    masked = _mask_abbrevs(answer)
-    for raw in _SENTENCE_SPLIT.split(masked):
-        s = _unmask(raw).strip()
-        if not s:
-            continue
-        citations = [int(n) for n in _CITATION.findall(s)]
-        text = _CITATION.sub("", s)
-        # Strip markdown emphasis: the generator writes "do **not** discuss", and the asterisks
-        # both break pattern matching and add formatting noise to the verifier's input.
-        text = re.sub(r"\*{1,3}([^*]+)\*{1,3}", r"\1", text)   # **bold** / *italic*
-        text = re.sub(r"(?<!\w)_{1,2}([^_]+)_{1,2}(?!\w)", r"\1", text)  # _italic_
-        text = text.replace("*", "")   # any stragglers
-        # Clean up debris left behind by stripping citation markers, e.g.
-        #   "papers ([1], [2], or [4]) mention"  ->  "papers (,, or ) mention"  -> "papers mention"
-        #   "papers ([1]-[4]) mention"           ->  "papers (-) mention"       -> "papers mention"
-        text = re.sub(r"\(\s*(?:[,;]|\s|and|or|to|[-–—])*\s*\)", "", text)   # empty-ish parens
-        text = re.sub(r"\s+", " ", text)
-        text = re.sub(r"\s+([.,;:])", r"\1", text)
-        text = re.sub(r"\s{2,}", " ", text).strip()
-        if len(text) < 12:
-            continue
-        claims.append({
-            "claim_text": text,
-            "citations": sorted(set(citations)),
-            "abstention": is_abstention(text),
-        })
-    return claims
 
 
 # ------------------------------------------------------------- retrieval

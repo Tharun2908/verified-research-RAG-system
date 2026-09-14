@@ -109,6 +109,27 @@ class TestClaimExtraction:
         assert len(claims) == 1, f"split into {len(claims)}: {[c['claim_text'] for c in claims]}"
 
 
+    def test_detects_source_absence_as_abstention(self):
+        claims = extract_claims(
+            "The provided sources do not discuss quantum computing."
+        )
+        assert len(claims) == 1
+        assert claims[0]["abstention"] is True
+
+    def test_detects_insufficient_information_as_abstention(self):
+        claims = extract_claims(
+            "There is insufficient information to determine the answer."
+        )
+        assert len(claims) == 1
+        assert claims[0]["abstention"] is True
+
+    def test_normal_factual_claim_is_not_abstention(self):
+        claims = extract_claims(
+            "Retrieval-augmented generation combines retrieval with generation [1]."
+        )
+        assert claims[0]["abstention"] is False
+
+
 # ------------------------------------------------- citation -> evidence mapping
 class TestEvidenceMapping:
     @pytest.fixture
