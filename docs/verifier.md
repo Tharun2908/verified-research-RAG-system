@@ -178,7 +178,11 @@ Reliably **worse**. The earlier "improvement" was the fusion head having seen th
 
 ### 3.6 Expanded external baseline and cascade evaluation
 
-The original model-selection tranche had only 15 unsupported positives, which was enough to expose the lightweight-model ordering but too small for strong claims about an external verifier baseline or a routing policy. I therefore expanded the **same model-independent stratified human-review protocol** from 150 to **500 reviewed claims**, preserving the original 150 judgments by `claim_id` and reviewing 350 newly sampled claims.
+The original model-selection tranche had only 15 unsupported positives, which was enough to expose
+the lightweight-model ordering but too small for strong claims about an external verifier baseline
+or a routing policy. I therefore expanded the **same model-independent stratified human-review
+protocol** from 150 to **500 reviewed claims**, preserving the original 150 judgments by `claim_id`
+and reviewing 350 newly sampled claims.
 
 The expanded review contains:
 
@@ -190,7 +194,9 @@ The expanded review contains:
  39 INVALID_EXTRACTION
 ```
 
-Binary evaluation excludes abstentions and invalid extractions, leaving **339 claims: 288 supported and 51 unsupported**. Sampling weights are recomputed from the 500-claim stratified sample; all paired uncertainty estimates resample whole `qid` clusters.
+Binary evaluation excludes abstentions and invalid extractions, leaving **339 claims: 288
+supported and 51 unsupported**. Sampling weights are recomputed from the 500-claim stratified
+sample; all paired uncertainty estimates resample whole `qid` clusters.
 
 On exactly those 339 binary claims:
 
@@ -200,7 +206,10 @@ On exactly those 339 binary claims:
 | **Bespoke-MiniCheck-7B** | **0.805** | 0.569 | **0.666** | **0.878** |
 | Confirmation cascade | **0.866** | 0.510 | 0.642 | — |
 
-The expanded benchmark preserved the main conclusion while correcting the absolute scale of the smaller pilot: MiniCheck remained substantially stronger than the deployed DeBERTa, but its Binary F1 fell from 0.769 on the original 101-claim tranche to **0.666** on the larger 339-claim benchmark.
+The expanded benchmark preserved the main conclusion while correcting the absolute scale of the
+smaller pilot: MiniCheck remained substantially stronger than the deployed DeBERTa, but its Binary
+F1 fell from 0.769 on the original 101-claim tranche to **0.666** on the larger 339-claim
+benchmark.
 
 The targeted **confirmation cascade** uses a simple label-independent rule:
 
@@ -209,7 +218,8 @@ DeBERTa predicts SUPPORTED   -> accept
 DeBERTa predicts UNSUPPORTED -> MiniCheck makes the final decision
 ```
 
-It sent **137/339 claims (40.4%)** to MiniCheck and reached Binary F1 **0.642**. Relative to DeBERTa-only, the paired question-clustered improvement was:
+It sent **137/339 claims (40.4%)** to MiniCheck and reached Binary F1 **0.642**. Relative to
+DeBERTa-only, the paired question-clustered improvement was:
 
 ```text
 Delta F1 = +0.238
@@ -223,11 +233,50 @@ Delta F1 = -0.025
 95% CI   = [-0.097, +0.039]
 ```
 
-That difference is not distinguishable from zero on this stress test, but it is **not evidence of equivalence**.
+That difference is not distinguishable from zero on this stress test, but it is **not evidence of
+equivalence**.
 
-A generic uncertainty-routing policy did not work. Escalating claims closest to DeBERTa's frozen `P(unsupported)=0.06` decision threshold improved only slowly; even at **74.9% MiniCheck usage**, Binary F1 reached just **0.479**, far below MiniCheck-only at 0.666. DeBERTa's errors were therefore not concentrated near its decision boundary in a way that made margin-based routing useful.
+The confirmation rule has a structural recall limit: any claim DeBERTa predicts `SUPPORTED` is
+accepted immediately, so MiniCheck never gets a chance to recover DeBERTa false negatives. This
+explains why cascade recall is **0.510**, below DeBERTa-only at 0.745 and MiniCheck-only at 0.569,
+while precision rises sharply to **0.866**. The policy is primarily correcting DeBERTa's false
+positive `UNSUPPORTED` calls.
 
-These are **quality-compute measurements on an enriched stress test**, not a frozen production routing policy. The routing rule itself never uses human labels, but selecting a deployment policy would still require independent validation data.
+A generic uncertainty-routing policy did not work. Escalating claims closest to DeBERTa's frozen
+`P(unsupported)=0.06` decision threshold improved only slowly; even at **74.9% MiniCheck usage**,
+Binary F1 reached just **0.479**, far below MiniCheck-only at 0.666. DeBERTa's errors were
+therefore not concentrated near its decision boundary in a way that made margin-based routing
+useful.
+
+### 3.7 H200 quality–compute measurement
+
+The same 339 binary claim/evidence pairs were then timed on one NVIDIA H200. Model download/load
+time was measured separately and **excluded**; each model received a warmup; MiniCheck prefix
+caching was disabled to match the quality evaluation. This is a sequential steady-state compute
+measurement, not a production concurrency/load test.
+
+| Policy | Binary F1 | Time / 339 claims | Effective claims/s | Cost / 1k claims* | Cost / 1k answers** |
+|---|---:|---:|---:|---:|---:|
+| DeBERTa-only | 0.4041 | 1.646 s | 205.9 | $0.0054 | $0.024 |
+| Confirmation cascade | **0.6417** | 4.356 s | 77.8 | **$0.0143** | **$0.064** |
+| MiniCheck-only | **0.6664** | 5.781 s | 58.6 | $0.0189 | $0.085 |
+
+\* Assumes $4/H200-hour and counts only measured inference time.
+\** Uses the M8 cited-arm average of 193 claims / 43 answers = 4.49 claims per answer.
+
+The cascade recovers **96.3% of MiniCheck-only F1 at 75.3% of its measured verification compute
+cost**. It is 2.65× the DeBERTa-only inference time, versus 3.51× for MiniCheck-only. The 40.4%
+escalation rate should therefore **not** be read as 40.4% of MiniCheck cost: every claim still pays
+for the DeBERTa pass first.
+
+Observed GPU memory in this configuration was about **3.1 GiB peak for DeBERTa** and roughly
+**131 GiB for the MiniCheck runtime**. The latter is a runtime/configuration footprint, not an
+intrinsic memory requirement of the model itself.
+
+These are **quality-compute measurements on an enriched stress test**, not a frozen production
+routing policy. The routing rule itself never uses human labels, but selecting a deployment policy
+would still require independent validation data.
+
 
 ---
 
@@ -249,20 +298,39 @@ Stronger offline result, not yet the live path:
   · confirmation cascade                  — F1 0.642 with 40.4% MiniCheck escalation
 ```
 
-The deployed S4 remains the current live verifier because it is already integrated, lightweight, and operationally simple. The expanded evaluation shows that **MiniCheck-7B is the stronger verifier offline**, so the deployment choice should no longer be read as evidence that DeBERTa is the best available model. Moving MiniCheck or the confirmation cascade into the live path would be a separate systems decision requiring latency/cost characterization and an independently validated routing policy.
+The deployed S4 remains the current live verifier because it is already integrated, lightweight,
+and operationally simple. The expanded evaluation shows that **MiniCheck-7B is the stronger
+verifier offline**, so the deployment choice should no longer be read as evidence that DeBERTa is
+the best available model.
+
+There are concrete operational reasons it has not simply been swapped in. The public Hugging Face
+Space is CPU-constrained, while the tested MiniCheck runtime is a 7B serving stack; on the H200
+efficiency run it occupied roughly **131 GiB** in this configuration. The backend could host a GPU
+cascade, but doing that responsibly would require batching/serving integration, failure handling,
+live latency characterization, and an independently validated routing policy. The new H200
+benchmark answers the first cost question; it does not turn the stress-test routing rule into a
+production policy.
 
 The live interface now uses the **same frozen binary operating point as the evaluation**:
-`P(unsupported) >= 0.06 -> Unsupported`, otherwise `Supported`. The 0.06 threshold was selected
-on the held-out leakage-safe grouped SciFact+HealthVer validation split by unsupported-class F1,
-then frozen before grouped test and grounded-hard evaluation; the grounded-hard labels were not
-used to tune it. Since the public interface exposes `support_score = 1 - P(unsupported)`, the
-equivalent rule is `support_score <= 0.94 -> Unsupported`.
+`P(unsupported) >= 0.06 -> Unsupported`, otherwise `Supported`. The 0.06 threshold was selected on
+the held-out leakage-safe grouped SciFact+HealthVer validation split by unsupported-class F1, then
+frozen before grouped test and grounded-hard evaluation; the grounded-hard labels were not used to
+tune it.
+
+That protocol avoids test-set tuning, but it does **not** solve domain shift: the threshold was
+selected on biomedical SciFact/HealthVer, while the live corpus is arXiv CS/ML. There is currently
+no independent in-domain validation split for operating-point selection. The grounded-hard
+precision of 0.277 is consistent with this remaining domain/operating-point mismatch, and those
+labels are deliberately not reused to retune the threshold. Since the public interface exposes
+`support_score = 1 - P(unsupported)`, the equivalent rule is
+`support_score <= 0.94 -> Unsupported`.
 
 The previous `Supported / Weak / Unsupported` UI bands were removed because only one decision
 threshold had actually been validated. With ECE ≈ 0.19, neither `P(unsupported)` nor
 `support_score` should be read as a literal probability/confidence value; the score is retained
-for ranking and auditability, while the binary label uses the frozen validation-selected
-operating point.
+for ranking and auditability, while the binary label uses the frozen validation-selected operating
+point.
+
 
 ---
 
@@ -285,10 +353,13 @@ Left uncorrected, the demo's most dramatic case (a question the corpus can't ans
 ## 7. Honest limitations
 
 - **Not calibrated.** ECE ≈ 0.19. Scores rank and label; they are not probabilities.
+- **Operating point is out of domain.** The 0.06 threshold is validation-selected without test leakage, but the validation domain is biomedical SciFact/HealthVer rather than arXiv CS/ML. No independent in-domain threshold-validation split currently exists.
 - **Enriched evaluation.** Grounded-hard is a deliberately hard stress test, not an estimate of production prevalence. The expanded human review has 500 rows and yields **339 binary claims / 51 unsupported** after excluding abstentions and invalid extractions. This materially strengthens the positive-class evidence over the original 101/15 tranche, but the resulting class balance still should not be interpreted as production prevalence.
+- **Cascade is offline.** Its quality and sequential H200 compute cost are measured, but it still lacks an independent policy-validation set and production serving/batching/failure-path validation.
 - **Custom splits.** Reported SciFact/HealthVer numbers come from a custom leakage-safe grouped split and are **not** comparable to published benchmark results.
 - **Domain gap remains.** The deployed verifier is biomedical-trained, serving a CS/ML corpus. The attempt to close that gap is documented above — it failed.
 - **The negative result is bounded.** It applies to *this* teacher-labeled pipeline, not to in-domain adaptation in principle. A cleanly curated in-domain training set might well succeed; the one that could be built with an LLM teacher at this budget did not.
+
 
 ---
 
@@ -304,6 +375,8 @@ The in-domain teacher-distillation experiment did **not** improve the lightweigh
 - an expanded 500-row human review that raised the binary hard-positive count from **15 to 51**;
 - an external MiniCheck-7B baseline showing that the deployed lightweight verifier is **not** the strongest available verifier on this domain;
 - a confirmation cascade that recovered most of MiniCheck's Binary F1 while invoking it on **40.4%** of claims;
+- an H200 efficiency benchmark showing that the cascade reaches **96.3% of MiniCheck-only F1 at 75.3% of its measured verification compute cost**, rather than assuming escalation rate equals cost;
+- an H200 efficiency benchmark showing that the cascade reaches **96.3% of MiniCheck-only F1 at 75.3% of its measured verification compute cost**, rather than assuming escalation rate equals cost;
 - and a generic uncertainty cascade that failed, preventing a superficially attractive routing story from being overstated.
 
 The useful result is not that every experiment succeeded. It is that the system's claims were repeatedly revised when stronger evaluation contradicted the earlier story.
@@ -323,4 +396,8 @@ The useful result is not that every experiment succeeded. It is that the system'
 | Expanded model predictions | `backend/data/grounded_hard_eval/grounded_hard_500_model_predictions.jsonl` |
 | Expanded summary | `backend/data/grounded_hard_eval/grounded_hard_500_eval_summary.json` |
 | Uncertainty-cascade curve | `backend/data/grounded_hard_eval/grounded_hard_500_uncertainty_cascade_curve.csv` |
+| H200 verifier-efficiency script | `verifier_study/3_gold_and_eval/benchmark_verifier_efficiency_h200.py` |
+| H200 verifier-efficiency result | `backend/data/grounded_hard_eval/verifier_efficiency_h200.json` |
+| H200 verifier-efficiency script | `verifier_study/3_gold_and_eval/benchmark_verifier_efficiency_h200.py` |
+| H200 verifier-efficiency result | `backend/data/grounded_hard_eval/verifier_efficiency_h200.json` |
 | Teacher audit | `verifier_study/4_teacher_audit/` |

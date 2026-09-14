@@ -87,10 +87,21 @@ Anti-circularity rule enforced: **no evaluated verifier generated, sampled, or l
 |---|---|
 | `eval_s4_binary_no_train.py` | Evaluate S4 variants on gold |
 | `eval_signal2_relevance_arxiv.py` | Relevance signal (S2) standalone |
-| `eval_grounded_hard_all_models.py` | All models on the human-reviewed grounded-hard tranche |
+| `eval_grounded_hard_all_models.py` | All lightweight models on the original human-reviewed grounded-hard tranche |
 | **`bootstrap_grounded_hard_clustered.py`** | **Paired question-clustered bootstrap CIs** — this is what turned an apparent fusion win into a measured regression |
+| `expand_grounded_hard_review.py` | Expand the nested model-independent human review from 150 to 500 rows |
+| `eval_grounded_hard_500.py` | Expanded 339-binary-claim DeBERTa / MiniCheck / cascade evaluation |
+| `benchmark_verifier_efficiency_h200.py` | Same 339 claims timed on H200 for DeBERTa-only, confirmation cascade, and MiniCheck-only |
 
-**Outcome:** the unadapted SciFact/HealthVer verifier ranked first (weighted F1 0.403, AUROC 0.788). OOF fusion was **reliably worse**: −0.074 weighted F1, 95% CI [−0.131, −0.018].
+**Outcome:** the original lightweight model-selection result still favors the unadapted
+SciFact/HealthVer verifier (weighted F1 0.403, AUROC 0.788), while OOF fusion is **reliably
+worse**: −0.074 weighted F1, 95% CI [−0.131, −0.018].
+
+On the expanded 339-claim binary benchmark, MiniCheck-7B reaches F1 **0.666** versus DeBERTa
+**0.404**. The confirmation cascade reaches **0.642** while escalating 40.4% of claims. On one
+H200, the same cascade uses **75.3% of MiniCheck-only measured verification compute cost** while
+retaining **96.3% of its F1**.
+
 
 ---
 
@@ -132,3 +143,20 @@ These scripts assume:
 - `OPENROUTER_API_KEY` in `.env` for teacher/auditor calls
 
 Most are resumable (they write incrementally and skip completed work on re-run) — a habit learned the hard way when a quota wall killed a long unsaved labelling run.
+
+For the H200 verifier-efficiency benchmark, the MiniCheck/vLLM stack on this cluster required:
+
+```bash
+cd /workspace/verified-research-RAG-system
+export VLLM_USE_FLASHINFER_SAMPLER=0
+export CC=/usr/bin/gcc
+export CXX=/usr/bin/g++
+
+CUDA_VISIBLE_DEVICES=0 python \
+  verifier_study/3_gold_and_eval/benchmark_verifier_efficiency_h200.py
+```
+
+The committed output is
+`backend/data/grounded_hard_eval/verifier_efficiency_h200.json`. Model-load time is excluded from
+the timed inference sections; the result is a sequential steady-state compute benchmark, not a
+production concurrency/load test.

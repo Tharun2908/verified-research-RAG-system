@@ -24,11 +24,18 @@ This system closes that loop. Every answer is decomposed into claims, and each c
 
 The **0.06 unsupported threshold is not a hand-picked UI cutoff**. It was selected on the
 held-out leakage-safe grouped SciFact+HealthVer validation split and frozen before test and
-grounded-hard evaluation. The displayed `support_score = 1 - P(unsupported)` is therefore
-thresholded at the equivalent boundary `support_score <= 0.94 → Unsupported`. Because the
-verifier is imperfectly calibrated (ECE ≈ 0.19), the numeric score is a ranking signal, **not
-a literal probability or confidence percentage**. The earlier unvalidated `Supported / Weak /
-Unsupported` bands were removed rather than pretending a second cutoff had empirical support.
+grounded-hard evaluation. **That operating point is still out of domain for this deployment**:
+SciFact+HealthVer is biomedical, while the live corpus is arXiv CS/ML. No independent in-domain
+validation split currently exists for threshold selection; the low grounded-hard precision
+(0.277) is consistent with that remaining domain/operating-point mismatch. The grounded-hard
+labels are therefore kept as evaluation data rather than reused to retune the cutoff.
+
+The displayed `support_score = 1 - P(unsupported)` is thresholded at the equivalent boundary
+`support_score <= 0.94 → Unsupported`. Because the verifier is imperfectly calibrated
+(ECE ≈ 0.19), the numeric score is a ranking signal, **not a literal probability or confidence
+percentage**. The earlier unvalidated `Supported / Weak / Unsupported` bands were removed rather
+than pretending a second cutoff had empirical support.
+
 
 A claim citing `[2]` is checked against source 2 — so a claim that cites a source which doesn't actually support it gets caught. An uncited claim is checked against *all* retrieved evidence (fair-chance policy): if nothing in the retrieved evidence supports it, it is marked unsupported relative to the available context.
 
@@ -92,9 +99,32 @@ ECE                                       0.058  →   0.19     ← calibration 
 
 A stronger external baseline changed the picture. I expanded the same model-independent stratified human review from **150 to 500 reviewed claims**. After excluding 122 abstentions and 39 invalid extractions, the expanded grounded-hard binary benchmark contains **339 claims: 288 supported and 51 unsupported**. On this larger set, the deployed DeBERTa reached precision 0.277, recall 0.745, Binary F1 **0.404**, and AUROC **0.773**. **Bespoke-MiniCheck-7B** reached precision **0.805**, recall 0.569, Binary F1 **0.666**, and AUROC **0.878**. MiniCheck therefore remained substantially stronger in F1 and ranking quality, but the larger benchmark also showed that the original 101-claim tranche had overstated its absolute F1.
 
-That led to two routing experiments on the expanded benchmark. A generic **uncertainty cascade still failed**: even escalating 74.9% of claims to MiniCheck reached only F1 **0.479**, suggesting that DeBERTa's errors were not concentrated near its decision threshold. A more targeted **confirmation cascade** worked much better: accept DeBERTa's `SUPPORTED` decisions, but send every DeBERTa `UNSUPPORTED` decision to MiniCheck for confirmation. It escalated **137/339 claims (40.4%)**, reached precision **0.866**, recall 0.510, and F1 **0.642**. The paired F1 gain over DeBERTa was **+0.238**, 95% CI **[+0.090, +0.362]**. Its F1 difference from MiniCheck-only was **−0.025**, 95% CI **[−0.097, +0.039]** — not distinguishable on this stress test, but not evidence of equivalence.
+That led to two routing experiments on the expanded benchmark. A generic **uncertainty cascade
+still failed**: even escalating 74.9% of claims to MiniCheck reached only F1 **0.479**, suggesting
+that DeBERTa's errors were not concentrated near its decision threshold. A more targeted
+**confirmation cascade** worked much better: accept DeBERTa's `SUPPORTED` decisions, but send every
+DeBERTa `UNSUPPORTED` decision to MiniCheck for confirmation. It escalated **137/339 claims
+(40.4%)**, reached precision **0.866**, recall 0.510, and F1 **0.642**. The paired F1 gain over
+DeBERTa was **+0.238**, 95% CI **[+0.090, +0.362]**. Its F1 difference from MiniCheck-only was
+**−0.025**, 95% CI **[−0.097, +0.039]** — not distinguishable on this stress test, but not
+evidence of equivalence.
 
-These cascade results are **quality–compute measurements on an enriched stress test, not a validated deployment policy**. The routing rule itself does not use human labels, but selecting a production policy would still require independent validation data.
+The routing rule makes a specific recall trade-off: claims that DeBERTa labels `SUPPORTED` are
+never escalated, so MiniCheck cannot recover DeBERTa false negatives. That is why cascade recall
+(0.510) is below both DeBERTa (0.745) and MiniCheck-only (0.569), even while precision rises to
+0.866.
+
+I then measured the same three policies on a single H200 using the **same 339 claim/evidence
+pairs**, with model-load time excluded. DeBERTa-only took **1.646 s** ($0.0054 / 1k claims), the
+confirmation cascade **4.356 s** ($0.0143 / 1k claims), and MiniCheck-only **5.781 s**
+($0.0189 / 1k claims), assuming $4/GPU-hour. The cascade therefore delivered **96.3% of
+MiniCheck-only F1 at 75.3% of its measured verification compute cost**. This is a sequential
+steady-state compute benchmark, not a production concurrency/load test.
+
+These cascade results are **quality–compute measurements on an enriched stress test, not a
+validated deployment policy**. The routing rule itself does not use human labels, but selecting
+a production policy would still require independent validation data.
+
 
 ---
 
@@ -106,15 +136,16 @@ These cascade results are **quality–compute measurements on an enriched stress
 | **Expanded grounded-hard: deployed DeBERTa** | 339 binary claims / 51 unsupported · precision 0.277 · recall 0.745 · Binary F1 **0.404** · AUROC 0.773 |
 | **Expanded grounded-hard: MiniCheck-7B** | precision **0.805** · recall 0.569 · Binary F1 **0.666** · AUROC **0.878** |
 | **Expanded grounded-hard: confirmation cascade** | MiniCheck on **40.4%** of claims · precision **0.866** · recall 0.510 · Binary F1 **0.642** |
-| **Serving** (vLLM, H200, Mistral-7B) | fp8 vs bf16: **+33–39% throughput** at all concurrencies (prefill-bound) |
-| | best: **18.8 req/s · 2,599 tok/s · p99 5.8 s** @ concurrency 64 |
-| | prefix caching: **~0%** on unique-prompt RAG traffic (only ~3.5% shared prefix — an earlier "+46%" was a benchmarking artifact from accidentally repeated prompts) |
+| **Verifier efficiency** (H200, same 339 claims) | DeBERTa 1.646 s / **$0.0054** per 1k claims · cascade 4.356 s / **$0.0143** · MiniCheck 5.781 s / **$0.0189** |
+| | cascade = **96.3% of MiniCheck F1 at 75.3% of measured verification cost** |
+| **Separate serving study** (not the live generator) | Mistral-7B/vLLM on H200: fp8 **+33–39% throughput**; realistic unique RAG prompts showed prefix caching ≈0% and exposed an earlier artificial +46% cache result → `docs/serving.md` |
 | **Load test** (app layer, stubbed model calls) | three stacked bottlenecks found and fixed → **2.2× scaling**, zero errors |
 | | BM25 rebuilt per request → built once at startup (8.8 s → 2.8 s single request) |
 | | DB pool exhaustion → sized pool + session scoping |
 | | sync model work on the event loop → `asyncio.to_thread` |
-| **Cost** | ~**$0.15 per 1,000 answers** at $4/hr GPU, 40% utilisation (generation only) |
-| | *utilisation dominates GPU price* — the headline finding |
+| **Cost** | generation study: ~**$0.15 / 1k answers** at $4/hr and 40% utilisation; verifier compute on H200: DeBERTa **$0.024**, cascade **$0.064**, MiniCheck **$0.085 / 1k answers** using 4.49 claims/answer |
+| | verification figures are measured compute equivalents with model-load/idle time excluded, not production billing estimates → `docs/cost.md` |
+
 
 **What is reproducible from this repo:** the M8 evaluation (409 claims), the serving benchmarks, the grounded-hard model comparison, the MiniCheck-7B baseline, and both cascade analyses — the human labels, per-model predictions, metrics, and bootstrap CIs are committed under `backend/data/`. **What is not:** model checkpoints (the deployed DeBERTa checkpoint lives on [HuggingFace](https://huggingface.co/Primeinvincible/scifact-healthver-verifier)), the full 1,245-claim generation pool, and the raw bootstrap replicates. Fine-tuning scripts assume a cluster workspace. This is *documented provenance plus reproducible headline results* — not a one-command rebuild of everything.
 
@@ -224,14 +255,17 @@ are not sent to the binary verifier and are excluded from unsupported-rate calcu
 ## Honest limitations
 
 - **The deployed DeBERTa verifier is not calibrated.** ECE ≈ 0.19. Scores are useful as labels and rankings, **not** as probabilities.
-- **The deployed verifier is recall-oriented and over-flags.** On the expanded grounded-hard benchmark, its Binary F1 is 0.404 with precision 0.277 despite recall 0.745. MiniCheck-7B is substantially stronger on the same claims, but it is not yet the live verifier.
-- **The confirmation cascade is not yet a production routing policy.** It reaches F1 0.642 with 40.4% MiniCheck escalation on the expanded stress test; choosing and freezing a deployment policy still requires independent validation data.
+- **The deployed verifier is recall-oriented and over-flags.** On the expanded grounded-hard benchmark, its Binary F1 is 0.404 with precision 0.277 despite recall 0.745. MiniCheck-7B is substantially stronger on the same claims.
+- **The 0.06 operating point was selected out of domain.** It was frozen on grouped SciFact+HealthVer validation data, not on arXiv CS/ML. No independent in-domain validation split currently exists, and the grounded-hard labels are not reused to tune one.
+- **MiniCheck/cascade are not the live path yet for operational reasons, not because DeBERTa is better.** The public Space is CPU-constrained; in the H200 benchmark the MiniCheck runtime occupied roughly 131 GiB in this configuration. A backend cascade deployment would need GPU serving/batching, failure handling, latency characterization, and an independently validated routing policy.
+- **The confirmation cascade makes a recall-for-precision trade.** It reaches F1 0.642 with 40.4% MiniCheck escalation, but MiniCheck never sees DeBERTa-supported claims and therefore cannot recover those false negatives.
 - **Domain gap remains.** The deployed verifier is trained on biomedical claim-verification data and serves a CS/ML corpus. The attempt to close that gap with in-domain distillation is documented — it failed.
 - **Custom splits.** SciFact/HealthVer numbers come from a custom leakage-safe grouped split and are **not** comparable to published benchmark results.
 - **Claim extraction is its own failure mode.** The expanded 500-row human review marked 39 rows as invalid extractions (7.8% raw), independent of verifier accuracy. Fixed (structural segmentation, abbreviation masking) and now regression-tested — but in any claim-level pipeline, extraction quality must be monitored *separately* from verifier quality, or extraction bugs get misattributed to the model.
 - **The grounded-hard evaluation is a deliberately enriched stress test**, not an estimate of production prevalence. The expanded human review contains 500 rows; after excluding 122 abstentions and 39 invalid extractions, binary evaluation uses **339 claims with 51 unsupported**. This materially strengthens the positive-class evidence over the original 101-claim / 15-unsupported tranche, but it still should not be interpreted as production prevalence.
 - **The demo's generator is not the evaluated generator.** The offline evaluation used self-hosted Mistral-7B; it is no longer served on OpenRouter, so the live path uses a current hosted model. The deployed verifier is the same DeBERTa checkpoint described above.
 - **This is a research and serving prototype, not a production service.** No auth, no rate limiting, no migrations. CI covers the model-free backend test suite, but not live model-serving or external-service integration. `/verify` is an unauthenticated GET that writes to the database. The serving *benchmarks* are real (measured on an H200); the *operational* hardening is not there.
+
 
 ---
 

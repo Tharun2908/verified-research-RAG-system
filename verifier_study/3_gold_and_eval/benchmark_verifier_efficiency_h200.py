@@ -30,8 +30,15 @@ Important measurement choices
 - Cost assumes one H200 at the supplied hourly rate. It does not include
   retrieval, generation, storage, networking, or idle/autoscaling overhead.
 
-Run from repository root:
-    python verifier_study/3_gold_and_eval/benchmark_verifier_efficiency_h200.py
+Run from repository root on the H200 cluster:
+    export VLLM_USE_FLASHINFER_SAMPLER=0
+    export CC=/usr/bin/gcc
+    export CXX=/usr/bin/g++
+    CUDA_VISIBLE_DEVICES=0 python \
+      verifier_study/3_gold_and_eval/benchmark_verifier_efficiency_h200.py
+
+The environment overrides above were required by the MiniCheck/vLLM stack on the measured
+cluster image and are recorded here for exact reruns.
 
 Output:
     backend/data/grounded_hard_eval/verifier_efficiency_h200.json
