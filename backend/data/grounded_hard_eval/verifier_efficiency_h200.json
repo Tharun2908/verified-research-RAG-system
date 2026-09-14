@@ -1,0 +1,121 @@
+{
+  "benchmark": {
+    "name": "H200 verifier efficiency",
+    "gpu": "NVIDIA H200",
+    "gpu_total_memory_gib": 139.80072021484375,
+    "torch_version": "2.13.0+cu130",
+    "cuda_version": "13.0",
+    "transformers_version": "5.17.0",
+    "model_load_time_excluded": true,
+    "warmup_claims": 8,
+    "prefix_caching_minicheck": false,
+    "gpu_hourly_usd_assumption": 4.0,
+    "claims_per_answer_assumption": 4.488372093023256,
+    "claims_per_answer_provenance": "M8 cited arm: 193 claims / 43 answers",
+    "interpretation": "Sequential steady-state compute benchmark on the expanded grounded-hard claim/evidence workload; not a production concurrency/load test."
+  },
+  "dataset": {
+    "reviewed_rows": 500,
+    "binary_claims": 339,
+    "supported": 288,
+    "unsupported": 51,
+    "excluded_labels": {
+      "ABSTENTION": 122,
+      "INVALID_EXTRACTION": 39
+    }
+  },
+  "deberta_only": {
+    "model_source": "Primeinvincible/scifact-healthver-verifier",
+    "model_revision": "902d07844e30e59d311f5cc500b9ec13d08d0002",
+    "load_seconds_excluded": 1.6608931100927293,
+    "inference": {
+      "seconds": 1.6462410329841077,
+      "gpu_memory_min_mib": 2227.0,
+      "gpu_memory_peak_mib": 3187.0
+    },
+    "quality": {
+      "precision": 0.2772397580660738,
+      "recall": 0.7449635067916939,
+      "f1": 0.40409478132457505,
+      "weighted_tp": 94.51791635297764,
+      "weighted_fp": 246.40690991400908,
+      "weighted_fn": 32.35798493785789,
+      "weighted_tn": 470.251813344267,
+      "auroc": 0.7728253356562436
+    },
+    "efficiency": {
+      "effective_claims_per_second": 205.92367290560216,
+      "effective_answers_per_second_at_claims_per_answer": 45.87936753855385,
+      "gpu_hours_per_1000_claims": 0.0013489356219142147,
+      "usd_per_1000_claims": 0.005395742487656859,
+      "usd_per_1000_answers": 0.024218100002738923
+    }
+  },
+  "minicheck_only": {
+    "model": "Bespoke-MiniCheck-7B",
+    "load_seconds_excluded": 23.54771399218589,
+    "inference": {
+      "seconds": 5.781128750182688,
+      "gpu_memory_min_mib": 132111.0,
+      "gpu_memory_peak_mib": 133711.0
+    },
+    "quality": {
+      "precision": 0.8046839397008168,
+      "recall": 0.5687370417490244,
+      "f1": 0.6664432385841003,
+      "weighted_tp": 72.15902476939104,
+      "weighted_fp": 17.51472315730416,
+      "weighted_fn": 54.7168765214445,
+      "weighted_tn": 699.144000100972,
+      "auroc": 0.8780475995535396
+    },
+    "efficiency": {
+      "effective_claims_per_second": 58.63906767156627,
+      "effective_answers_per_second_at_claims_per_answer": 13.064662745478497,
+      "gpu_hours_per_1000_claims": 0.004737076983106103,
+      "usd_per_1000_claims": 0.018948307932424413,
+      "usd_per_1000_answers": 0.08504705653390492
+    }
+  },
+  "confirmation_cascade": {
+    "routing_rule": "DeBERTa SUPPORTED -> accept; DeBERTa UNSUPPORTED -> MiniCheck",
+    "claims_sent_to_minicheck": 137,
+    "raw_escalation_fraction": 0.40412979351032446,
+    "deberta_full_inference_seconds": 1.6462410329841077,
+    "minicheck_routed_inference": {
+      "seconds": 2.7092741820961237,
+      "gpu_memory_min_mib": 133711.0,
+      "gpu_memory_peak_mib": 133713.0
+    },
+    "combined_sequential_inference_seconds": 4.355515215080231,
+    "quality": {
+      "precision": 0.8655343712298608,
+      "recall": 0.5098410038594171,
+      "f1": 0.6416937814871334,
+      "weighted_tp": 64.6865368796879,
+      "weighted_fp": 10.049417034855178,
+      "weighted_fn": 62.18936441114764,
+      "weighted_tn": 706.6093062234208
+    },
+    "efficiency": {
+      "effective_claims_per_second": 77.83235352416405,
+      "effective_answers_per_second_at_claims_per_answer": 17.340887054606497,
+      "gpu_hours_per_1000_claims": 0.0035689242994757717,
+      "usd_per_1000_claims": 0.014275697197903087,
+      "usd_per_1000_answers": 0.0640746409115185
+    },
+    "structural_recall_note": "MiniCheck never sees DeBERTa-supported claims, so it cannot recover DeBERTa false negatives."
+  },
+  "relative": {
+    "cascade_vs_deberta_time_multiplier": 2.6457336002523744,
+    "minicheck_vs_deberta_time_multiplier": 3.511714648312072,
+    "cascade_cost_fraction_of_minicheck": 0.7534022166419653,
+    "cascade_f1_fraction_of_minicheck": 0.9628633683049308
+  },
+  "quality_guardrail": {
+    "deberta_f1_close": true,
+    "minicheck_f1_close": true,
+    "cascade_f1_close": true,
+    "routed_count_matches": true
+  }
+}
