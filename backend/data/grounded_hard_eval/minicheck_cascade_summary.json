@@ -1,0 +1,287 @@
+{
+  "protocol": {
+    "evaluation_set": "grounded-hard human-reviewed binary claims",
+    "binary_positive_class": "UNSUPPORTED",
+    "routing": "escalate smallest abs(base_prob_unsupported - frozen_base_threshold)",
+    "base_threshold": 0.06,
+    "routing_uses_human_labels": false,
+    "design_sampling_weights_used": true,
+    "bootstrap_unit": "qid",
+    "paired_cluster_bootstrap": true,
+    "n_boot": 5000,
+    "valid_bootstrap_replicates": 5000,
+    "seed": 2908,
+    "important_caveat": "The escalation percentages define a post-hoc quality/cost curve on this stress test. They are not a validated deployment policy. A production routing margin should be selected on independent validation data."
+  },
+  "sample": {
+    "binary_claims": 101,
+    "supported_claims": 86,
+    "unsupported_claims": 15,
+    "question_clusters": 62
+  },
+  "endpoints": {
+    "deberta_only": {
+      "precision": 0.2846667060282222,
+      "recall": 0.6892703290000382,
+      "f1": 0.40292607645572576,
+      "weighted_tp": 86.09642857142856,
+      "weighted_fp": 216.35,
+      "weighted_fn": 38.81309523809524,
+      "weighted_tn": 519.3035714285713
+    },
+    "minicheck_only": {
+      "precision": 0.8686880802168542,
+      "recall": 0.6902710533338416,
+      "f1": 0.7692699869356021,
+      "weighted_tp": 86.22142857142856,
+      "weighted_fp": 13.033333333333331,
+      "weighted_fn": 38.68809523809524,
+      "weighted_tn": 722.6202380952383
+    }
+  },
+  "curve": [
+    {
+      "precision": 0.2846667060282222,
+      "recall": 0.6892703290000382,
+      "f1": 0.40292607645572576,
+      "weighted_tp": 86.09642857142856,
+      "weighted_fp": 216.35,
+      "weighted_fn": 38.81309523809524,
+      "weighted_tn": 519.3035714285713,
+      "requested_escalation_pct": 0,
+      "escalated_claims": 0,
+      "actual_escalation_pct": 0.0,
+      "minicheck_calls_per_100_claims": 0.0,
+      "f1_gain_vs_base": 0.0,
+      "f1_gap_vs_minicheck": -0.36634391047987636,
+      "f1_95_ci": [
+        0.17491726923453693,
+        0.5757727259051555
+      ],
+      "gain_vs_base_95_ci": [
+        0.0,
+        0.0
+      ],
+      "gap_vs_minicheck_95_ci": [
+        -0.5402879249229526,
+        -0.1633654531548454
+      ]
+    },
+    {
+      "precision": 0.3020435267437635,
+      "recall": 0.6892703290000382,
+      "f1": 0.42002770332468925,
+      "weighted_tp": 86.09642857142856,
+      "weighted_fp": 198.95,
+      "weighted_fn": 38.81309523809524,
+      "weighted_tn": 536.7035714285715,
+      "requested_escalation_pct": 5,
+      "escalated_claims": 5,
+      "actual_escalation_pct": 4.9504950495049505,
+      "minicheck_calls_per_100_claims": 4.9504950495049505,
+      "f1_gain_vs_base": 0.017101626868963493,
+      "f1_gap_vs_minicheck": -0.34924228361091286,
+      "f1_95_ci": [
+        0.18773726235303256,
+        0.5924196559236595
+      ],
+      "gain_vs_base_95_ci": [
+        0.0,
+        0.043333964146331394
+      ],
+      "gap_vs_minicheck_95_ci": [
+        -0.5262219178140638,
+        -0.15008582518928162
+      ]
+    },
+    {
+      "precision": 0.2930977884229596,
+      "recall": 0.6892703290000382,
+      "f1": 0.41129919726107644,
+      "weighted_tp": 86.09642857142856,
+      "weighted_fp": 207.64999999999998,
+      "weighted_fn": 38.81309523809524,
+      "weighted_tn": 528.0035714285715,
+      "requested_escalation_pct": 10,
+      "escalated_claims": 10,
+      "actual_escalation_pct": 9.900990099009901,
+      "minicheck_calls_per_100_claims": 9.900990099009901,
+      "f1_gain_vs_base": 0.008373120805350687,
+      "f1_gap_vs_minicheck": -0.35797078967452567,
+      "f1_95_ci": [
+        0.18344706702215507,
+        0.5828822167366288
+      ],
+      "gain_vs_base_95_ci": [
+        -0.01875290866185188,
+        0.037411312939556546
+      ],
+      "gap_vs_minicheck_95_ci": [
+        -0.5274810377950103,
+        -0.16176080194084916
+      ]
+    },
+    {
+      "precision": 0.3020435267437635,
+      "recall": 0.6892703290000382,
+      "f1": 0.42002770332468925,
+      "weighted_tp": 86.09642857142856,
+      "weighted_fp": 198.95,
+      "weighted_fn": 38.81309523809524,
+      "weighted_tn": 536.7035714285715,
+      "requested_escalation_pct": 20,
+      "escalated_claims": 20,
+      "actual_escalation_pct": 19.801980198019802,
+      "minicheck_calls_per_100_claims": 19.801980198019802,
+      "f1_gain_vs_base": 0.017101626868963493,
+      "f1_gap_vs_minicheck": -0.34924228361091286,
+      "f1_95_ci": [
+        0.18717459223640107,
+        0.5926124680810513
+      ],
+      "gain_vs_base_95_ci": [
+        -0.01410848015250195,
+        0.051474034411979175
+      ],
+      "gap_vs_minicheck_95_ci": [
+        -0.5201694063069963,
+        -0.15539223185492695
+      ]
+    },
+    {
+      "precision": 0.32254219973731574,
+      "recall": 0.7583203080324807,
+      "f1": 0.45258355896339103,
+      "weighted_tp": 94.72142857142856,
+      "weighted_fp": 198.95,
+      "weighted_fn": 30.188095238095237,
+      "weighted_tn": 536.7035714285715,
+      "requested_escalation_pct": 30,
+      "escalated_claims": 30,
+      "actual_escalation_pct": 29.7029702970297,
+      "minicheck_calls_per_100_claims": 29.7029702970297,
+      "f1_gain_vs_base": 0.049657482507665274,
+      "f1_gap_vs_minicheck": -0.3166864279722111,
+      "f1_95_ci": [
+        0.19443206623852552,
+        0.6375100704856022
+      ],
+      "gain_vs_base_95_ci": [
+        -0.007916732825913406,
+        0.11392504459627029
+      ],
+      "gap_vs_minicheck_95_ci": [
+        -0.49206140301330475,
+        -0.1394291289714761
+      ]
+    },
+    {
+      "precision": 0.34278107350109216,
+      "recall": 0.7583203080324807,
+      "f1": 0.4721415368365462,
+      "weighted_tp": 94.72142857142856,
+      "weighted_fp": 181.61071428571427,
+      "weighted_fn": 30.188095238095237,
+      "weighted_tn": 554.0428571428572,
+      "requested_escalation_pct": 40,
+      "escalated_claims": 40,
+      "actual_escalation_pct": 39.603960396039604,
+      "minicheck_calls_per_100_claims": 39.603960396039604,
+      "f1_gain_vs_base": 0.06921546038082044,
+      "f1_gap_vs_minicheck": -0.2971284500990559,
+      "f1_95_ci": [
+        0.207148361219505,
+        0.6577111291268402
+      ],
+      "gain_vs_base_95_ci": [
+        0.006634159990359077,
+        0.14025295447032546
+      ],
+      "gap_vs_minicheck_95_ci": [
+        -0.473878563566231,
+        -0.1197886064906406
+      ]
+    },
+    {
+      "precision": 0.34278107350109216,
+      "recall": 0.7583203080324807,
+      "f1": 0.4721415368365462,
+      "weighted_tp": 94.72142857142856,
+      "weighted_fp": 181.61071428571427,
+      "weighted_fn": 30.188095238095237,
+      "weighted_tn": 554.0428571428572,
+      "requested_escalation_pct": 50,
+      "escalated_claims": 50,
+      "actual_escalation_pct": 49.504950495049506,
+      "minicheck_calls_per_100_claims": 49.504950495049506,
+      "f1_gain_vs_base": 0.06921546038082044,
+      "f1_gap_vs_minicheck": -0.2971284500990559,
+      "f1_95_ci": [
+        0.207148361219505,
+        0.6577111291268402
+      ],
+      "gain_vs_base_95_ci": [
+        0.006634159990359077,
+        0.14025295447032546
+      ],
+      "gap_vs_minicheck_95_ci": [
+        -0.473878563566231,
+        -0.1197886064906406
+      ]
+    },
+    {
+      "precision": 0.40623707629390227,
+      "recall": 0.7583203080324807,
+      "f1": 0.529055637747893,
+      "weighted_tp": 94.72142857142856,
+      "weighted_fp": 138.44642857142858,
+      "weighted_fn": 30.188095238095237,
+      "weighted_tn": 597.207142857143,
+      "requested_escalation_pct": 75,
+      "escalated_claims": 76,
+      "actual_escalation_pct": 75.24752475247524,
+      "minicheck_calls_per_100_claims": 75.24752475247524,
+      "f1_gain_vs_base": 0.12612956129216724,
+      "f1_gap_vs_minicheck": -0.24021434918770912,
+      "f1_95_ci": [
+        0.24995664382774307,
+        0.7166266622317
+      ],
+      "gain_vs_base_95_ci": [
+        0.03972841720103747,
+        0.21661616513686077
+      ],
+      "gap_vs_minicheck_95_ci": [
+        -0.4155513120151317,
+        -0.06925444637058621
+      ]
+    },
+    {
+      "precision": 0.8686880802168542,
+      "recall": 0.6902710533338416,
+      "f1": 0.7692699869356021,
+      "weighted_tp": 86.22142857142856,
+      "weighted_fp": 13.033333333333331,
+      "weighted_fn": 38.68809523809524,
+      "weighted_tn": 722.6202380952383,
+      "requested_escalation_pct": 100,
+      "escalated_claims": 101,
+      "actual_escalation_pct": 100.0,
+      "minicheck_calls_per_100_claims": 100.0,
+      "f1_gain_vs_base": 0.36634391047987636,
+      "f1_gap_vs_minicheck": 0.0,
+      "f1_95_ci": [
+        0.43024345055553936,
+        0.932663282924506
+      ],
+      "gain_vs_base_95_ci": [
+        0.16336545315484519,
+        0.5402879249229525
+      ],
+      "gap_vs_minicheck_95_ci": [
+        0.0,
+        0.0
+      ]
+    }
+  ]
+}

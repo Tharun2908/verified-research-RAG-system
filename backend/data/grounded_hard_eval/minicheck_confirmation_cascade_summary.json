@@ -1,0 +1,68 @@
+{
+  "protocol": {
+    "policy": "DeBERTa SUPPORTED -> accept; DeBERTa UNSUPPORTED -> MiniCheck final decision",
+    "binary_positive_class": "UNSUPPORTED",
+    "weight_field": "sampling_weight",
+    "cluster_field": "qid",
+    "paired_cluster_bootstrap": true,
+    "n_boot": 5000,
+    "valid_bootstrap_replicates": 5000,
+    "seed": 2908
+  },
+  "sample": {
+    "binary_claims": 101,
+    "supported_claims": 86,
+    "unsupported_claims": 15,
+    "question_clusters": 62
+  },
+  "escalation": {
+    "claims_sent_to_minicheck": 36,
+    "raw_escalation_fraction": 0.3564356435643564,
+    "raw_escalation_percent": 35.64356435643564,
+    "weighted_escalation_fraction": 0.3514517764531251,
+    "weighted_escalation_percent": 35.14517764531251,
+    "minicheck_confirmed_unsupported": 10,
+    "minicheck_overruled_to_supported": 26
+  },
+  "deberta_only": {
+    "precision": 0.2846667060282222,
+    "recall": 0.6892703290000382,
+    "f1": 0.40292607645572576,
+    "weighted_tp": 86.09642857142856,
+    "weighted_fp": 216.35,
+    "weighted_fn": 38.81309523809524,
+    "weighted_tn": 519.3035714285713
+  },
+  "minicheck_only": {
+    "precision": 0.8686880802168542,
+    "recall": 0.6902710533338416,
+    "f1": 0.7692699869356021,
+    "weighted_tp": 86.22142857142856,
+    "weighted_fp": 13.033333333333331,
+    "weighted_fn": 38.68809523809524,
+    "weighted_tn": 722.6202380952383
+  },
+  "confirmation_cascade": {
+    "precision": 0.9471091672599934,
+    "recall": 0.6212210743013992,
+    "f1": 0.750306483639817,
+    "weighted_tp": 77.59642857142856,
+    "weighted_fp": 4.333333333333333,
+    "weighted_fn": 47.31309523809524,
+    "weighted_tn": 731.3202380952382,
+    "f1_95_ci": [
+      0.46121861506476897,
+      0.913163038614315
+    ],
+    "f1_difference_vs_deberta": 0.34738040718409124,
+    "difference_vs_deberta_95_ci": [
+      0.16709026270981941,
+      0.5329081884764774
+    ],
+    "f1_difference_vs_minicheck": -0.01896350329578511,
+    "difference_vs_minicheck_95_ci": [
+      -0.11359716134317231,
+      0.10159376089421923
+    ]
+  }
+}
