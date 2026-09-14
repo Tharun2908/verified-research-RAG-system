@@ -1,0 +1,82 @@
+{
+  "rows_total": 500,
+  "label_source_counts": {
+    "new_350_review": 350,
+    "carried_forward_from_original_150": 150
+  },
+  "label_counts_raw": {
+    "SUPPORTED": 288,
+    "ABSTENTION": 122,
+    "UNSUPPORTED": 51,
+    "INVALID_EXTRACTION": 39
+  },
+  "label_counts_weighted": {
+    "ABSTENTION": 304.3975,
+    "INVALID_EXTRACTION": 97.0679,
+    "SUPPORTED": 716.6587,
+    "UNSUPPORTED": 126.8759
+  },
+  "binary_rows_raw": 339,
+  "binary_label_counts_raw": {
+    "SUPPORTED": 288,
+    "UNSUPPORTED": 51
+  },
+  "binary_label_counts_weighted": {
+    "SUPPORTED": 716.6587,
+    "UNSUPPORTED": 126.8759
+  },
+  "by_stratum_raw": {
+    "drop_home_related::cited_answer": {
+      "ABSTENTION": 8,
+      "SUPPORTED": 1,
+      "UNSUPPORTED": 1
+    },
+    "drop_home_related::plain_answer": {
+      "ABSTENTION": 9,
+      "SUPPORTED": 1
+    },
+    "home_weak_1::cited_answer": {
+      "SUPPORTED": 56,
+      "INVALID_EXTRACTION": 11,
+      "ABSTENTION": 5,
+      "UNSUPPORTED": 11
+    },
+    "home_weak_1::plain_answer": {
+      "UNSUPPORTED": 13,
+      "SUPPORTED": 68,
+      "INVALID_EXTRACTION": 7,
+      "ABSTENTION": 9
+    },
+    "home_weak_plus_distractors::cited_answer": {
+      "SUPPORTED": 71,
+      "UNSUPPORTED": 8,
+      "ABSTENTION": 9,
+      "INVALID_EXTRACTION": 10
+    },
+    "home_weak_plus_distractors::plain_answer": {
+      "SUPPORTED": 77,
+      "INVALID_EXTRACTION": 8,
+      "ABSTENTION": 8,
+      "UNSUPPORTED": 12
+    },
+    "remove_strongest::cited_answer": {
+      "ABSTENTION": 35,
+      "SUPPORTED": 8,
+      "UNSUPPORTED": 4,
+      "INVALID_EXTRACTION": 1
+    },
+    "remove_strongest::plain_answer": {
+      "ABSTENTION": 39,
+      "SUPPORTED": 6,
+      "UNSUPPORTED": 2,
+      "INVALID_EXTRACTION": 2
+    }
+  },
+  "sampling_protocol": "nested expansion to 500 using the same model-independent hard_policy × answer_variant stratified random sampler and seed",
+  "notes": [
+    "Sampling metadata and sampling_weight come from the 500-row sample.",
+    "Original 150 labels were matched by claim_id, not review_id.",
+    "ABSTENTION and INVALID_EXTRACTION should be excluded from binary metrics.",
+    "No evaluated-model prediction was used to select the newly reviewed claims."
+  ]
+}

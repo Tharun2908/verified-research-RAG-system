@@ -80,13 +80,13 @@ ECE                                       0.058  →   0.19     ← calibration 
 - A fusion that *appeared* to help was an artifact. Under question-grouped **out-of-fold stacking** with a **clustered bootstrap**, it was reliably **worse**: −0.074 Binary F1 (unsupported class, design-weighted), 95% CI [−0.131, −0.018].
 - The auto-cleaning procedure was **pre-registered with an acceptance threshold — and failed it**. No cleaned retrain was run.
 
-**Among the lightweight variants, the unadapted SciFact/HealthVer verifier performed best** on grounded-hard (Binary F1 0.403, AUROC 0.788), so the worse arXiv-adapted variants were not deployed.
+**Among the lightweight variants, the unadapted SciFact/HealthVer verifier performed best** on the original 101-claim grounded-hard model-selection tranche (Binary F1 0.403, AUROC 0.788), so the worse arXiv-adapted variants were not deployed.
 
-A stronger external baseline changed the picture. **Bespoke-MiniCheck-7B** reached precision 0.869, recall 0.690, Binary F1 **0.769**, and AUROC **0.881** on the same 101 human-reviewed binary claims. Its paired question-clustered F1 improvement over the deployed DeBERTa was **+0.366**, 95% CI **[+0.163, +0.540]**. The gain came almost entirely from removing false positives: weighted false-positive mass fell from 216.35 to 13.03 while recall stayed essentially unchanged.
+A stronger external baseline changed the picture. I expanded the same model-independent stratified human review from **150 to 500 reviewed claims**. After excluding 122 abstentions and 39 invalid extractions, the expanded grounded-hard binary benchmark contains **339 claims: 288 supported and 51 unsupported**. On this larger set, the deployed DeBERTa reached precision 0.277, recall 0.745, Binary F1 **0.404**, and AUROC **0.773**. **Bespoke-MiniCheck-7B** reached precision **0.805**, recall 0.569, Binary F1 **0.666**, and AUROC **0.878**. MiniCheck therefore remained substantially stronger in F1 and ranking quality, but the larger benchmark also showed that the original 101-claim tranche had overstated its absolute F1.
 
-That led to two routing experiments. A generic **uncertainty cascade failed**: even escalating 75.2% of claims to MiniCheck reached only F1 0.529, showing that even escalating 75.2% of claims to MiniCheck reached only F1 0.529, suggesting that DeBERTa's errors were not concentrated near its decision threshold. A more targeted **confirmation cascade** worked much better: accept DeBERTa's `SUPPORTED` decisions, but send every DeBERTa `UNSUPPORTED` decision to MiniCheck for confirmation. It escalated **36/101 claims (35.6%)**, reached precision 0.947, recall 0.621, and F1 **0.750**. The paired F1 gain over DeBERTa was **+0.347**, 95% CI **[+0.167, +0.533]**. Its F1 difference from MiniCheck-only was −0.019, 95% CI [−0.114, +0.102] — not distinguishable on this stress test, but not evidence of equivalence.
+That led to two routing experiments on the expanded benchmark. A generic **uncertainty cascade still failed**: even escalating 74.9% of claims to MiniCheck reached only F1 **0.479**, suggesting that DeBERTa's errors were not concentrated near its decision threshold. A more targeted **confirmation cascade** worked much better: accept DeBERTa's `SUPPORTED` decisions, but send every DeBERTa `UNSUPPORTED` decision to MiniCheck for confirmation. It escalated **137/339 claims (40.4%)**, reached precision **0.866**, recall 0.510, and F1 **0.642**. The paired F1 gain over DeBERTa was **+0.238**, 95% CI **[+0.090, +0.362]**. Its F1 difference from MiniCheck-only was **−0.025**, 95% CI **[−0.097, +0.039]** — not distinguishable on this stress test, but not evidence of equivalence.
 
-These cascade results are **exploratory quality–compute measurements**, not a validated deployment policy. A production routing rule would need independent validation data and a larger hard-positive set.
+These cascade results are **quality–compute measurements on an enriched stress test, not a validated deployment policy**. The routing rule itself does not use human labels, but selecting a production policy would still require independent validation data.
 
 ---
 
@@ -95,9 +95,9 @@ These cascade results are **exploratory quality–compute measurements**, not a 
 | | |
 |---|---|
 | **Lightweight verifier** (custom leakage-safe grouped SciFact+HealthVer test) | recall 0.84 · precision 0.71 · F1 0.77 · AUROC 0.71 · ECE 0.19 |
-| **Grounded-hard: deployed DeBERTa** | precision 0.285 · recall 0.689 · Binary F1 **0.403** · AUROC 0.788 |
-| **Grounded-hard: MiniCheck-7B** | precision 0.869 · recall 0.690 · Binary F1 **0.769** · AUROC **0.881** |
-| **Grounded-hard: confirmation cascade** | MiniCheck on **35.6%** of claims · precision 0.947 · recall 0.621 · Binary F1 **0.750** |
+| **Expanded grounded-hard: deployed DeBERTa** | 339 binary claims / 51 unsupported · precision 0.277 · recall 0.745 · Binary F1 **0.404** · AUROC 0.773 |
+| **Expanded grounded-hard: MiniCheck-7B** | precision **0.805** · recall 0.569 · Binary F1 **0.666** · AUROC **0.878** |
+| **Expanded grounded-hard: confirmation cascade** | MiniCheck on **40.4%** of claims · precision **0.866** · recall 0.510 · Binary F1 **0.642** |
 | **Serving** (vLLM, H200, Mistral-7B) | fp8 vs bf16: **+33–39% throughput** at all concurrencies (prefill-bound) |
 | | best: **18.8 req/s · 2,599 tok/s · p99 5.8 s** @ concurrency 64 |
 | | prefix caching: **~0%** on unique-prompt RAG traffic (only ~3.5% shared prefix — an earlier "+46%" was a benchmarking artifact from accidentally repeated prompts) |
@@ -215,12 +215,12 @@ the first thing to consolidate.
 ## Honest limitations
 
 - **The deployed DeBERTa verifier is not calibrated.** ECE ≈ 0.19. Scores are useful as labels and rankings, **not** as probabilities.
-- **The deployed verifier is recall-oriented and over-flags.** On grounded-hard, its Binary F1 falls to 0.403 with precision 0.285 despite recall 0.689. MiniCheck-7B is substantially stronger on the same claims, but it is not yet the live verifier.
-- **The confirmation cascade is exploratory.** F1 0.750 with 35.6% MiniCheck escalation is a post-hoc quality–compute result on this stress test, not a validated production routing policy.
+- **The deployed verifier is recall-oriented and over-flags.** On the expanded grounded-hard benchmark, its Binary F1 is 0.404 with precision 0.277 despite recall 0.745. MiniCheck-7B is substantially stronger on the same claims, but it is not yet the live verifier.
+- **The confirmation cascade is not yet a production routing policy.** It reaches F1 0.642 with 40.4% MiniCheck escalation on the expanded stress test; choosing and freezing a deployment policy still requires independent validation data.
 - **Domain gap remains.** The deployed verifier is trained on biomedical claim-verification data and serves a CS/ML corpus. The attempt to close that gap with in-domain distillation is documented — it failed.
 - **Custom splits.** SciFact/HealthVer numbers come from a custom leakage-safe grouped split and are **not** comparable to published benchmark results.
-- **Claim extraction is its own failure mode.** Human review measured a 6.7% extraction-failure rate, independent of verifier accuracy. Fixed (structural segmentation, abbreviation masking) and now regression-tested — but in any claim-level pipeline, extraction quality must be monitored *separately* from verifier quality, or extraction bugs get misattributed to the model.
-- **The grounded-hard evaluation is a deliberately enriched stress test** (101 binary claims, 15 unsupported, across 62 question clusters — 11 of which contain at least one unsupported claim), not an estimate of production prevalence. Absolute intervals are wide; paired comparisons are more stable. The unsupported class is still too small for strong deployment claims.
+- **Claim extraction is its own failure mode.** The expanded 500-row human review marked 39 rows as invalid extractions (7.8% raw), independent of verifier accuracy. Fixed (structural segmentation, abbreviation masking) and now regression-tested — but in any claim-level pipeline, extraction quality must be monitored *separately* from verifier quality, or extraction bugs get misattributed to the model.
+- **The grounded-hard evaluation is a deliberately enriched stress test**, not an estimate of production prevalence. The expanded human review contains 500 rows; after excluding 122 abstentions and 39 invalid extractions, binary evaluation uses **339 claims with 51 unsupported**. This materially strengthens the positive-class evidence over the original 101-claim / 15-unsupported tranche, but it still should not be interpreted as production prevalence.
 - **The demo's generator is not the evaluated generator.** The offline evaluation used self-hosted Mistral-7B; it is no longer served on OpenRouter, so the live path uses a current hosted model. The deployed verifier is the same DeBERTa checkpoint described above.
 - **This is a research and serving prototype, not a production service.** No auth, no rate limiting, no CI, no migrations. `/verify` is an unauthenticated GET that writes to the database. The serving *benchmarks* are real (measured on an H200); the *operational* hardening is not there.
 

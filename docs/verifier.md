@@ -153,10 +153,9 @@ The gold set was measuring *"can you spot a question the corpus doesn't cover"*,
 
 Anti-circularity was enforced explicitly: no evaluated verifier was allowed to generate, sample, or label its own evaluation set.
 
-### 3.5 The result
+### 3.5 Original grounded-hard model-selection result
 
-On the human-reviewed grounded-hard tranche (101 binary claims, 15 unsupported, 62 question
-clusters; the bootstrap resamples all 62):
+The original human-reviewed grounded-hard model-selection tranche contained **101 binary claims, 15 unsupported, and 62 question clusters**. This is the tranche used to compare the lightweight verifier variants, relevance signal, arXiv fine-tuning, and fusion heads; the bootstrap resamples all 62 clusters:
 
 | Model |  Binary F1(unsupported class, design-weighted) | Precision | Recall | AUROC |
 |---|---:|---:|---:|---:|
@@ -177,28 +176,88 @@ OOF fusion vs. base verifier,  Binary F1(unsupported class, design-weighted):  -
 
 Reliably **worse**. The earlier "improvement" was the fusion head having seen the same partition used to select its own threshold.
 
+### 3.6 Expanded external baseline and cascade evaluation
+
+The original model-selection tranche had only 15 unsupported positives, which was enough to expose the lightweight-model ordering but too small for strong claims about an external verifier baseline or a routing policy. I therefore expanded the **same model-independent stratified human-review protocol** from 150 to **500 reviewed claims**, preserving the original 150 judgments by `claim_id` and reviewing 350 newly sampled claims.
+
+The expanded review contains:
+
+```text
+500 reviewed rows
+288 SUPPORTED
+ 51 UNSUPPORTED
+122 ABSTENTION
+ 39 INVALID_EXTRACTION
+```
+
+Binary evaluation excludes abstentions and invalid extractions, leaving **339 claims: 288 supported and 51 unsupported**. Sampling weights are recomputed from the 500-claim stratified sample; all paired uncertainty estimates resample whole `qid` clusters.
+
+On exactly those 339 binary claims:
+
+| System | Precision | Recall | Binary F1 | AUROC |
+|---|---:|---:|---:|---:|
+| Deployed SciFact/HealthVer DeBERTa | 0.277 | **0.745** | 0.404 | 0.773 |
+| **Bespoke-MiniCheck-7B** | **0.805** | 0.569 | **0.666** | **0.878** |
+| Confirmation cascade | **0.866** | 0.510 | 0.642 | — |
+
+The expanded benchmark preserved the main conclusion while correcting the absolute scale of the smaller pilot: MiniCheck remained substantially stronger than the deployed DeBERTa, but its Binary F1 fell from 0.769 on the original 101-claim tranche to **0.666** on the larger 339-claim benchmark.
+
+The targeted **confirmation cascade** uses a simple label-independent rule:
+
+```text
+DeBERTa predicts SUPPORTED   -> accept
+DeBERTa predicts UNSUPPORTED -> MiniCheck makes the final decision
+```
+
+It sent **137/339 claims (40.4%)** to MiniCheck and reached Binary F1 **0.642**. Relative to DeBERTa-only, the paired question-clustered improvement was:
+
+```text
+Delta F1 = +0.238
+95% CI   = [+0.090, +0.362]
+```
+
+Relative to MiniCheck-only:
+
+```text
+Delta F1 = -0.025
+95% CI   = [-0.097, +0.039]
+```
+
+That difference is not distinguishable from zero on this stress test, but it is **not evidence of equivalence**.
+
+A generic uncertainty-routing policy did not work. Escalating claims closest to DeBERTa's frozen `P(unsupported)=0.06` decision threshold improved only slowly; even at **74.9% MiniCheck usage**, Binary F1 reached just **0.479**, far below MiniCheck-only at 0.666. DeBERTa's errors were therefore not concentrated near its decision boundary in a way that made margin-based routing useful.
+
+These are **quality-compute measurements on an enriched stress test**, not a frozen production routing policy. The routing rule itself never uses human labels, but selecting a deployment policy would still require independent validation data.
+
 ---
 
-## 4. What was deployed, and why
+## 4. What is deployed, and why
 
-```
-Deploy:      base SciFact/HealthVer S4  (S4-only, no fusion)
+```text
+Current live verifier:
+  base SciFact/HealthVer S4  (S4-only, no fusion)
 
-Do not deploy:
+Rejected lightweight variants:
   · relevance signal (S2) standalone      — F1 0.254; detects topic mismatch, not support
   · original thesis S4                    — out of domain, over-flags (219/270 gold as unsupported)
   · arXiv-fine-tuned S4                   — no reliable improvement
   · validation-fitted fusion              — advantage was an artifact
   · OOF fusion                            — reliably worse (95% CI excludes zero)
+
+Stronger offline result, not yet the live path:
+  · MiniCheck-7B                          — F1 0.666, AUROC 0.878 on expanded grounded-hard
+  · confirmation cascade                  — F1 0.642 with 40.4% MiniCheck escalation
 ```
 
-S4-only is also the *simplest* deployable thing: one model, no fusion coefficients, no out-of-fold caveat. `support_score = 1 − P(unsupported)`, mapped to three bands (≥0.70 Supported · 0.45–0.69 Weak · <0.45 Unsupported).
+The deployed S4 remains the current live verifier because it is already integrated, lightweight, and operationally simple. The expanded evaluation shows that **MiniCheck-7B is the stronger verifier offline**, so the deployment choice should no longer be read as evidence that DeBERTa is the best available model. Moving MiniCheck or the confirmation cascade into the live path would be a separate systems decision requiring latency/cost characterization and an independently validated routing policy.
+
+The live interface still exposes `support_score = 1 − P(unsupported)`, mapped to three bands (≥0.70 Supported · 0.45–0.69 Weak · <0.45 Unsupported). These bands are interface heuristics rather than calibrated probabilities; threshold validation is a remaining deployment task.
 
 ---
 
 ## 5. A separate finding: claim extraction is its own failure mode
 
-Human review of 150 grounded-hard rows found **10 invalid claim extractions — a 6.7% raw failure rate**, independent of verifier accuracy. Sentence-splitting on `.` breaks on `vs.`, `e.g.`, `et al.`; the verifier then dutifully scores a sentence *fragment* and flags it unsupported. The verifier was right; the input was garbage.
+The original 150-row grounded-hard review found **10 invalid claim extractions (6.7%)**. The expanded 500-row review found **39 invalid extractions (7.8%)**, confirming that extraction is a persistent failure mode independent of verifier accuracy. Sentence-splitting on `.` breaks on `vs.`, `e.g.`, `et al.`; the verifier then dutifully scores a sentence *fragment* and flags it unsupported. The verifier may be behaving consistently; the input itself is malformed.
 
 This is visible in the live demo and was fixed there (abbreviation-masked splitting, markdown stripping, citation-debris cleanup). The general lesson: **in a claim-level verification pipeline, extraction quality must be monitored separately from verifier quality**, or extraction failures will be misattributed to the model.
 
@@ -215,7 +274,7 @@ Left uncorrected, the demo's most dramatic case (a question the corpus can't ans
 ## 7. Honest limitations
 
 - **Not calibrated.** ECE ≈ 0.19. Scores rank and label; they are not probabilities.
-- **Enriched evaluation.** The grounded-hard tranche is a deliberately hard stress test, not an estimate of production prevalence. 101 binary claims / 15 unsupported → wide absolute uncertainty; paired comparisons are more stable than absolute numbers.
+- **Enriched evaluation.** Grounded-hard is a deliberately hard stress test, not an estimate of production prevalence. The expanded human review has 500 rows and yields **339 binary claims / 51 unsupported** after excluding abstentions and invalid extractions. This materially strengthens the positive-class evidence over the original 101/15 tranche, but the resulting class balance still should not be interpreted as production prevalence.
 - **Custom splits.** Reported SciFact/HealthVer numbers come from a custom leakage-safe grouped split and are **not** comparable to published benchmark results.
 - **Domain gap remains.** The deployed verifier is biomedical-trained, serving a CS/ML corpus. The attempt to close that gap is documented above — it failed.
 - **The negative result is bounded.** It applies to *this* teacher-labeled pipeline, not to in-domain adaptation in principle. A cleanly curated in-domain training set might well succeed; the one that could be built with an LLM teacher at this budget did not.
@@ -224,16 +283,19 @@ Left uncorrected, the demo's most dramatic case (a question the corpus can't ans
 
 ## 8. What this study is actually evidence of
 
-The verifier did not get better. What the three weeks produced instead:
+The in-domain teacher-distillation experiment did **not** improve the lightweight verifier. What the study produced instead is a stronger evaluation and decision-making process:
 
 - a leakage audit that caught a **96% contaminated** dataset that had passed a naive split check;
 - an independent audit finding **46% false positives** in a teacher's positive class, human-validated at 94.3%;
 - a **pre-registered decision rule that was allowed to fail**, blocking a retrain that would have looked good and been wrong;
 - an evaluation set rebuilt after discovering the first one measured the easy problem (bait) rather than the hard one (subtle overclaim);
 - **question-grouped OOF stacking + clustered bootstrap CIs** that turned an apparent fusion improvement into a measured regression;
-- and the decision **not to ship** a model that three weeks of work had produced, because it was worse.
+- an expanded 500-row human review that raised the binary hard-positive count from **15 to 51**;
+- an external MiniCheck-7B baseline showing that the deployed lightweight verifier is **not** the strongest available verifier on this domain;
+- a confirmation cascade that recovered most of MiniCheck's Binary F1 while invoking it on **40.4%** of claims;
+- and a generic uncertainty cascade that failed, preventing a superficially attractive routing story from being overstated.
 
-That is the result. The verifier that ships is the honest one.
+The useful result is not that every experiment succeeded. It is that the system's claims were repeatedly revised when stronger evaluation contradicted the earlier story.
 
 ---
 
@@ -246,4 +308,8 @@ That is the result. The verifier that ships is the honest one.
 | Adaptation pipeline | `verifier_study/1_scifact_healthver/` |
 | Distillation pipeline | `verifier_study/2_arxiv_distillation/` |
 | Gold set + evaluation | `verifier_study/3_gold_and_eval/` |
+| Expanded 500-row labels | `backend/data/grounded_hard_eval/grounded_hard_random_review_500_labeled.jsonl` |
+| Expanded model predictions | `backend/data/grounded_hard_eval/grounded_hard_500_model_predictions.jsonl` |
+| Expanded summary | `backend/data/grounded_hard_eval/grounded_hard_500_eval_summary.json` |
+| Uncertainty-cascade curve | `backend/data/grounded_hard_eval/grounded_hard_500_uncertainty_cascade_curve.csv` |
 | Teacher audit | `verifier_study/4_teacher_audit/` |
