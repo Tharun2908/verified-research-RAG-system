@@ -257,6 +257,13 @@ sentences remain eligible for verification. Ambiguous clauses and conjunctions s
 the verifier path, even when they could be a genuine refusal. The `Abstention` label
 identifies a linguistic form; it does not prove that the sources lack the answer.
 
+Citation extraction accepts individual markers (`[1]`, `[1][2]`) and comma-separated
+numeric lists (`[1, 2]`). Within the same text block, markers immediately after
+sentence-ending punctuation attach to the preceding sentence, including a final
+trailing marker. Markers at the start of a new paragraph or list item stay in that
+block. This is an explicit ownership convention for ambiguous citation placement;
+unsupported formats such as numeric ranges (`[1–3]`) are not expanded.
+
 ---
 
 ## Honest limitations

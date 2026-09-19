@@ -5,7 +5,7 @@ The demo carries a mirrored copy of this pure module because the Space is deploy
 standalone target. CI asserts the two copies are byte-for-byte identical so behavior cannot
 silently diverge.
 
-Extraction handles three independent failure modes:
+Extraction handles four independent failure modes:
 
 1. ABBREVIATIONS
    Naive sentence splitting breaks on "vs.", "e.g.", "et al.", etc.
@@ -21,6 +21,12 @@ Extraction handles three independent failure modes:
    language heuristic, not proof that a refusal is correct. Factual limitations and mixed
    refusal/assertion sentences remain eligible for verification.
 
+4. CITATION OWNERSHIP
+   Numeric citation lists such as [1, 2] are parsed as separate source numbers.
+   Within a block, citations immediately after sentence punctuation belong to the
+   preceding sentence. Normalize them before segmentation so they cannot migrate
+   to the next claim or disappear as a citation-only fragment.
+
 See docs/verifier.md and backend/tests/.
 """
 
@@ -29,7 +35,7 @@ from __future__ import annotations
 import re
 
 
-_SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z\[])")
+_SENTENCE_BOUNDARY = re.compile(r"[.!?][\"\u201d\u2019')]*(?P<space>\s+)(?=[A-Z\[])")
 
 _BLOCK_SPLIT = re.compile(
     r"\n+"
@@ -40,7 +46,14 @@ _BLOCK_SPLIT = re.compile(
 _HEADING = re.compile(r"^\s*#{1,6}\s*")
 _LIST_MARKER = re.compile(r"^\s*(?:\d+[.)]|[-*\u2022])\s+")
 _PREAMBLE = re.compile(r":\s*$")
-_CITATION = re.compile(r"\[(\d+)\]")
+# Support explicit numeric lists; do not interpret arbitrary bracketed prose.
+_CITATION_TOKEN = r"\[[ \t]*\d+(?:[ \t]*,[ \t]*\d+)*[ \t]*\]"
+_CITATION = re.compile(_CITATION_TOKEN)
+_POST_SENTENCE_CITATIONS = re.compile(
+    r"(?P<ending>[.!?][\"\u201d\u2019')]*)(?:[ \t]*)"
+    rf"(?P<refs>{_CITATION_TOKEN}(?:[ \t]*{_CITATION_TOKEN})*)"
+    r"(?:[ \t]*\.)?"
+)
 _STUB_PREFIX = re.compile(r"^\[STUB ANSWER\]\s*", re.IGNORECASE)
 
 _ABBREVS = [
@@ -91,12 +104,39 @@ _POSSIBLE_ADDITIONAL_CLAUSE = re.compile(
 
 def _mask_abbrevs(text: str) -> str:
     for a in _ABBREVS:
-        text = text.replace(a, a.replace(".", _MASK))
+        # Whole abbreviations only: "al." must not mask the end of "retrieval.".
+        text = re.sub(
+            r"(?<!\w)" + re.escape(a) + r"(?!\w)",
+            lambda m: m.group().replace(".", _MASK),
+            text,
+        )
     return text
 
 
 def _unmask(text: str) -> str:
     return text.replace(_MASK, ".")
+
+
+def _split_sentences(block: str) -> list[str]:
+    """Keep suffix citations with the preceding sentence within this block.
+
+    Mask abbreviations first so their periods are not treated as sentence ends.
+    Moving suffix markers before the ending makes both citation styles follow
+    the same segmentation path. Preserve closing quotes/parentheses in the text.
+    A new structural block is handled independently: leading citations there
+    belong to that block, never the preceding list item or paragraph.
+    """
+    block = _mask_abbrevs(block)
+    block = _POST_SENTENCE_CITATIONS.sub(
+        lambda m: " " + m["refs"] + m["ending"] + " ", block
+    )
+    sentences = []
+    start = 0
+    for boundary in _SENTENCE_BOUNDARY.finditer(block):
+        sentences.append(_unmask(block[start:boundary.start("space")]))
+        start = boundary.end()
+    sentences.append(_unmask(block[start:]))
+    return sentences
 
 
 def _strip_markdown(text: str) -> str:
@@ -110,7 +150,7 @@ def _clean(text: str) -> str:
     text = _HEADING.sub("", text)
     text = re.sub(r"\(\s*(?:[,;]|\s|and|or|to|[-\u2013\u2014])*\s*\)", "", text)
     text = re.sub(r"\s+", " ", text)
-    text = re.sub(r"\s+([.,;:])", r"\1", text)
+    text = re.sub(r"\s+([.!?,;:])", r"\1", text)
     text = re.sub(r"^\s*[A-Z][A-Za-z ]{0,30}:\s+(?=[A-Z])", "", text)
     return re.sub(r"\s{2,}", " ", text).strip()
 
@@ -154,12 +194,16 @@ def extract_claims(answer: str) -> list[dict]:
 
         block = _LIST_MARKER.sub("", block.strip())
 
-        for raw in _SENTENCE_SPLIT.split(_mask_abbrevs(block)):
-            sentence = _unmask(raw).strip()
+        for raw in _split_sentences(block):
+            sentence = raw.strip()
             if not sentence:
                 continue
 
-            citations = [int(n) for n in _CITATION.findall(sentence)]
+            citations = [
+                int(n)
+                for marker in _CITATION.finditer(sentence)
+                for n in re.findall(r"\d+", marker.group())
+            ]
             text = _clean(_CITATION.sub("", sentence))
 
             if len(text) < MIN_CLAIM_CHARS:

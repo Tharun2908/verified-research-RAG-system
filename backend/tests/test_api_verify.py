@@ -113,19 +113,39 @@ class TestGenerationOutageReturns503:
 class TestSuccessfulVerifyShape:
     """The success path must carry component metadata, so a client can tell real from stub."""
 
-    def test_response_declares_its_components(self, client, monkeypatch):
+    @pytest.mark.parametrize("answer,expected_citations", [
+        ("RAG combines retrieval with generation [1].", [[1]]),
+        ("RAG combines retrieval with generation. [1] DeBERTa verifies claims. [2]",
+         [[1], [2]]),
+        ("RAG combines retrieval with generation. [1, 3] DeBERTa verifies claims [2].",
+         [[1, 3], [2]]),
+    ])
+    def test_response_declares_components_and_preserves_evidence_scope(
+        self, client, monkeypatch, answer, expected_citations
+    ):
+        evidence = [
+            {"number": 1, "title": "RAG paper", "text": "RAG combines retrieval and generation.",
+             "chunk_id": 1},
+            {"number": 2, "title": "Verifier paper", "text": "DeBERTa verifies claims.",
+             "chunk_id": 2},
+            {"number": 3, "title": "Retrieval paper", "text": "Retrieval supplies evidence.",
+             "chunk_id": 3},
+            {"number": 4, "title": "Distractor", "text": "This source was never cited.",
+             "chunk_id": 4},
+        ]
+
         async def fake_generate(question: str, top_k: int = 5):
             return {
                 "question": question,
-                "answer": "RAG combines retrieval with generation [1].",
-                "evidence": [
-                    {"number": 1, "title": "T", "text": "RAG combines retrieval and "
-                                                       "generation.", "chunk_id": 1},
-                ],
+                "answer": answer,
+                "evidence": evidence,
             }
+
+        verifier_calls = []
 
         class FakeVerifier:
             def verify(self, claim_text, evidence_text):
+                verifier_calls.append((claim_text, evidence_text))
                 return 0.91
 
             def describe(self):
@@ -180,7 +200,16 @@ class TestSuccessfulVerifyShape:
         assert body["verification_status"] == "verified"
         assert body["components"]["verifier"]["implementation"] == "RealVerifier"
         assert body["components"]["generator"]["implementation"] == "OpenRouterClient"
-        assert body["n_claims"] >= 1
+        assert body["n_claims"] == len(expected_citations)
+        assert [c["citations"] for c in body["claims"]] == expected_citations
+        text_by_number = {e["number"]: e["text"] for e in evidence}
+        assert [text for _, text in verifier_calls] == [
+            "\n".join(text_by_number[n] for n in citations)
+            for citations in expected_citations
+        ]
+        assert [text for text, _ in verifier_calls] == [
+            c["claim_text"] for c in body["claims"]
+        ]
 
     def test_stub_components_downgrade_the_status(self, client, monkeypatch):
         """
