@@ -8,8 +8,8 @@ Important framing: prompting for citations does NOT guarantee grounding — the 
 cite a source that doesn't actually support the statement. That is exactly the failure M6's
 verifier detects. So this step produces a draft; M6 is what measures whether it's grounded.
 
-Returns BOTH the answer text and the numbered evidence list, because the citation number ->
-chunk mapping is what M5 (claim extraction) and M6 (verification) need downstream.
+Returns the answer text, its generator metadata, and the numbered evidence list, because
+the citation number -> chunk mapping is what M5 and M6 need downstream.
 """
 
 from __future__ import annotations
@@ -54,6 +54,7 @@ async def generate_answer(
       {
         "question": str,
         "answer": str,                # the (draft, possibly-ungrounded) cited answer
+        "generator": dict,            # metadata for THIS answer, including its model
         "evidence": [                 # numbered evidence the answer was grounded on
             {"number": int, "title": str, "text": str},
             ...
@@ -72,12 +73,13 @@ async def generate_answer(
     # 3. build the grounded prompt
     prompt = build_prompt(question, evidence)
 
-    # 4. call the LLM (stub now; vLLM/API later via env var — no code change)
-    answer = await generation_client.generate(prompt)
+    # 4. carry the selected model alongside its answer, including after a fallback.
+    result = await generation_client.generate(prompt)
 
     return {
         "question": question,
-        "answer": answer,
+        "answer": result.text,
+        "generator": {**generation_client.describe(), "model": result.model},
         "evidence": evidence,
     }
 

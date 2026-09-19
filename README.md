@@ -194,6 +194,11 @@ Returns the answer, every extracted claim with its citations, support score and 
 the unsupported-claim rate. If generation is unavailable, the endpoint returns **503** — it
 does not return a fabricated "verified" result.
 
+`components.generator.model` identifies the model selected for that answer, including
+fallbacks. The model name travels with the answer, so overlapping requests cannot overwrite
+each other's attribution. `/research` exposes the same metadata under `generator`. Static
+client descriptions and failed generations have no answering model (`null`).
+
 **Degraded modes are explicit.** Without `OPENROUTER_API_KEY`, generation falls back to a
 stub and prints a wall of warnings. `DEV_STUB_VERIFIER=true` swaps in a lexical-overlap stub
 for model-free development — and says so. Both defaults are *real*; you have to opt out.

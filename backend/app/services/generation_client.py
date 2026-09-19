@@ -3,7 +3,7 @@ backend/app/services/generation_client.py
 
 Generation backend, swappable behind one interface:
 
-    generate(prompt: str) -> str          raises GenerationError on total failure
+    generate(prompt: str) -> GenerationResult   raises GenerationError on total failure
 
 Selection (real-by-default, same policy as the verifier):
 
@@ -28,6 +28,7 @@ served by any OpenRouter provider — hence the chain.)
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 
 import httpx
 
@@ -58,14 +59,22 @@ class GenerationError(RuntimeError):
     """
 
 
+@dataclass(frozen=True)
+class GenerationResult:
+    """One answer and the model selected for that call; never shared client state."""
+
+    text: str
+    model: str | None
+
+
 class GenerationClient:
     """Base interface."""
 
-    async def generate(self, prompt: str) -> str:
+    async def generate(self, prompt: str) -> GenerationResult:
         raise NotImplementedError
 
     def describe(self) -> dict:
-        """Component metadata, surfaced in every API response."""
+        """Static component metadata. Per-answer model identity comes from the result."""
         return {"implementation": type(self).__name__}
 
 
@@ -74,16 +83,15 @@ class OpenRouterClient(GenerationClient):
 
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
-        self.last_model: str | None = None
 
     def describe(self) -> dict:
         return {
             "implementation": "OpenRouterClient",
-            "model": self.last_model,      # the model that actually answered
-            "candidates": GEN_MODELS,
+            "model": None,  # no answer is associated with a static description
+            "candidates": list(GEN_MODELS),
         }
 
-    async def generate(self, prompt: str) -> str:
+    async def generate(self, prompt: str) -> GenerationResult:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
@@ -103,8 +111,8 @@ class OpenRouterClient(GenerationClient):
                         },
                     )
                     if r.status_code == 200:
-                        self.last_model = model
-                        return r.json()["choices"][0]["message"]["content"].strip()
+                        answer = r.json()["choices"][0]["message"]["content"].strip()
+                        return GenerationResult(text=answer, model=model)
                     errors.append(f"{model}: HTTP {r.status_code}")
                 except Exception as e:
                     errors.append(f"{model}: {type(e).__name__}")
@@ -120,9 +128,6 @@ class StubGenerator(GenerationClient):
     set, or DEV_STUB_GENERATOR=true. Grounding scores over this text are meaningless.
     """
 
-    def __init__(self) -> None:
-        self.last_model = None
-
     def describe(self) -> dict:
         return {
             "implementation": "StubGenerator",
@@ -130,14 +135,14 @@ class StubGenerator(GenerationClient):
             "warning": "placeholder text; any grounding computed over it is meaningless",
         }
 
-    async def generate(self, prompt: str) -> str:
-        return (
+    async def generate(self, prompt: str) -> GenerationResult:
+        return GenerationResult(text=(
             "[STUB ANSWER] Based on the retrieved evidence, the topic in question is "
             "addressed by the provided sources [1] [2] [3]. The first source establishes "
             "the core finding [1], and additional sources provide supporting context. "
             "(Placeholder text from the stub generator; set OPENROUTER_API_KEY for real "
             "generation.)"
-        )
+        ), model=None)
 
 
 # --- selection --------------------------------------------------------------
@@ -181,7 +186,7 @@ async def _demo():
             "Sources:\n[1] Retrieval-augmented generation combines a parametric generator "
             "with a non-parametric retriever.\n\nQuestion: What is RAG?\n\nAnswer:"
         )
-        print("\n" + out)
+        print("\n" + out.text)
     except GenerationError as e:
         print(f"\nGENERATION FAILED: {e}")
 

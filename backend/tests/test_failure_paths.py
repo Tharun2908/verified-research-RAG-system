@@ -109,11 +109,12 @@ class TestComponentMetadata:
         assert d["implementation"] == "StubGenerator"
         assert "warning" in d
 
-    def test_openrouter_reports_the_model_that_answered(self):
+    def test_openrouter_static_description_has_no_answering_model(self):
         c = OpenRouterClient(api_key="dummy")
         d = c.describe()
         assert d["implementation"] == "OpenRouterClient"
-        assert "model" in d and "candidates" in d
+        assert d["model"] is None
+        assert "candidates" in d
 
 
 # ----------------------------------------------------------- model source resolution

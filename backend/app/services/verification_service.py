@@ -44,11 +44,11 @@ from app.services.generator import generate_answer
 from app.services.verifier import get_verifier, label_for_score
 
 
-def _components() -> dict:
+def _components(generator_metadata: dict, verifier) -> dict:
     """Which verifier and generator actually produced this result."""
     return {
-        "verifier": get_verifier().describe(),
-        "generator": generation_client.describe(),
+        "verifier": verifier.describe(),
+        "generator": generator_metadata,
     }
 
 
@@ -208,7 +208,7 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
         )
 
     # If a stub produced any of this, it is not a real verification and must not say it is.
-    components = _components()
+    components = _components(gen["generator"], verifier)
     if _is_degraded(components) and verification_status in {"verified", "abstained"}:
         verification_status = "development_stub"
 

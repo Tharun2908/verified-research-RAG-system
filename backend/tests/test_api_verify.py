@@ -138,6 +138,7 @@ class TestSuccessfulVerifyShape:
             return {
                 "question": question,
                 "answer": answer,
+                "generator": {"implementation": "OpenRouterClient", "model": "fake-model"},
                 "evidence": evidence,
             }
 
@@ -150,16 +151,6 @@ class TestSuccessfulVerifyShape:
 
             def describe(self):
                 return {"implementation": "RealVerifier", "model": "m", "revision": "r"}
-
-        class FakeGenerator:
-            """
-            Must be patched too. `generation_client` is a MODULE-LEVEL singleton chosen at
-            import time: with no OPENROUTER_API_KEY it is a StubGenerator, so the status
-            would be "development_stub" and this test would fail — or pass — depending on
-            the developer's .env. A test must not depend on the environment it runs in.
-            """
-            def describe(self):
-                return {"implementation": "OpenRouterClient", "model": "fake-model"}
 
         class NoopSession:
             async def __aenter__(self):
@@ -184,9 +175,6 @@ class TestSuccessfulVerifyShape:
             "app.services.verification_service.get_verifier", lambda: FakeVerifier()
         )
         monkeypatch.setattr(
-            "app.services.verification_service.generation_client", FakeGenerator()
-        )
-        monkeypatch.setattr(
             "app.services.verification_service.AsyncSessionLocal", lambda: NoopSession()
         )
 
@@ -199,7 +187,9 @@ class TestSuccessfulVerifyShape:
         body = r.json()
         assert body["verification_status"] == "verified"
         assert body["components"]["verifier"]["implementation"] == "RealVerifier"
-        assert body["components"]["generator"]["implementation"] == "OpenRouterClient"
+        assert body["components"]["generator"] == {
+            "implementation": "OpenRouterClient", "model": "fake-model",
+        }
         assert body["n_claims"] == len(expected_citations)
         assert [c["citations"] for c in body["claims"]] == expected_citations
         text_by_number = {e["number"]: e["text"] for e in evidence}
@@ -223,6 +213,7 @@ class TestSuccessfulVerifyShape:
             return {
                 "question": question,
                 "answer": "RAG combines retrieval with generation [1].",
+                "generator": StubGenerator().describe(),
                 "evidence": [{"number": 1, "title": "T", "text": "RAG combines retrieval "
                                                                  "and generation.",
                               "chunk_id": 1}],
@@ -249,9 +240,6 @@ class TestSuccessfulVerifyShape:
         )
         monkeypatch.setattr(
             "app.services.verification_service.get_verifier", lambda: StubVerifier()
-        )
-        monkeypatch.setattr(
-            "app.services.verification_service.generation_client", StubGenerator()
         )
         monkeypatch.setattr(
             "app.services.verification_service.AsyncSessionLocal", lambda: NoopSession()
@@ -325,6 +313,7 @@ class TestAbstentionHandling:
             return {
                 "question": question,
                 "answer": answer,
+                "generator": {"implementation": "OpenRouterClient", "model": "fake-model"},
                 "evidence": [{
                     "number": 1,
                     "title": "RAG paper",
@@ -343,10 +332,6 @@ class TestAbstentionHandling:
             def describe(self):
                 return {"implementation": "RealVerifier", "model": "m", "revision": "r"}
 
-        class FakeGenerator:
-            def describe(self):
-                return {"implementation": "OpenRouterClient", "model": "fake-model"}
-
         class NoopSession:
             async def __aenter__(self):
                 return self
@@ -364,9 +349,6 @@ class TestAbstentionHandling:
         )
         monkeypatch.setattr(
             "app.services.verification_service.get_verifier", lambda: SpyVerifier()
-        )
-        monkeypatch.setattr(
-            "app.services.verification_service.generation_client", FakeGenerator()
         )
         monkeypatch.setattr(
             "app.services.verification_service.AsyncSessionLocal",
