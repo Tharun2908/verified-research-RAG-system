@@ -199,7 +199,7 @@ stub and prints a wall of warnings. `DEV_STUB_VERIFIER=true` swaps in a lexical-
 for model-free development — and says so. Both defaults are *real*; you have to opt out.
 
 ```bash
-pytest tests/ -v    # 62 tests. No database or models required.
+pytest tests/ -v    # No database or model downloads required.
 #   claim extraction, citation mapping, frozen decision threshold, rate maths
 #   generation failure -> typed error -> HTTP 503
 #   stub components are machine-detectable
@@ -249,6 +249,13 @@ claim-extraction module rather than importing the backend package. The two copie
 same structural segmentation, abbreviation handling, citation cleanup, and abstention detection;
 CI asserts they remain byte-for-byte identical. Abstention statements stay visible in results but
 are not sent to the binary verifier and are excluded from unsupported-rate calculations.
+
+Abstention detection is conservative: only clear standalone assistant refusals or
+retrieved-source absence statements are exempted. Factual limitations (for example,
+"the model cannot determine whether a claim is supported") and mixed refusal/assertion
+sentences remain eligible for verification. Ambiguous clauses and conjunctions stay in
+the verifier path, even when they could be a genuine refusal. The `Abstention` label
+identifies a linguistic form; it does not prove that the sources lack the answer.
 
 ---
 

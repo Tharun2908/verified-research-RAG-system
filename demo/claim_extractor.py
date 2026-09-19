@@ -16,10 +16,10 @@ Extraction handles three independent failure modes:
    Fix: split on structure first, then sentences within each block.
 
 3. ABSTENTIONS
-   Statements such as "the provided sources do not discuss X" are correct refusals, not
-   factual claims to score with a binary support verifier.
-   Fix: tag them with abstention=True so the pipeline can exclude them from unsupported-rate
-   and grounding-score calculations.
+   Clear standalone refusals such as "the provided sources do not discuss X" are tagged
+   with abstention=True and excluded from binary grounding metrics. This is a conservative
+   language heuristic, not proof that a refusal is correct. Factual limitations and mixed
+   refusal/assertion sentences remain eligible for verification.
 
 See docs/verifier.md and backend/tests/.
 """
@@ -52,28 +52,39 @@ _MASK = "\u241F"
 
 MIN_CLAIM_CHARS = 12
 
+# A paper/model's inability to do something is a factual assertion, not the
+# assistant abstaining. Require an explicit assistant or retrieved-context subject.
+_CONTEXT_SUBJECT = (
+    r"(?:(?:the\s+)?(?:provided|retrieved|supplied|available)\s+"
+    r"(?:sources?|evidence|papers?|documents?|abstracts?|context|text|articles?|studies)"
+    r"|(?:the|these)\s+(?:sources|evidence|abstracts|context))"
+)
+_ABSENCE_VERB = (
+    r"(?:contain|discuss|mention|address|cover|provide|include|specify|state|"
+    r"describe|report|say|indicate)"
+)
+_ANSWER_REFUSAL = r"(?:answer\b|(?:determine|find|establish)\s+(?:the|an)\s+answer\b)"
 _ABSTENTION_PAT = re.compile(
     r"(?:"
-    r"(?:sources?|evidence|papers?|documents?|abstracts?|context|text|articles?|studies)"
-    r"[^.]{0,60}?\b(?:do|does|did)\s+n[o']?t\b"
-    r"[^.]{0,20}?\b(?:contain|discuss|mention|address|cover|provide|include|specify|state|"
-    r"describe|report|say|indicate)"
-    r"|"
-    r"\bnone\s+of\s+the\b[^.]{0,60}?"
-    r"\b(?:mention|discuss|contain|address|cover|provide|include|specify|state|describe|"
-    r"report|say|indicate)"
-    r"|"
-    r"\b(?:no|not\s+enough|insufficient)\s+(?:relevant\s+)?information\b"
-    r"|"
-    r"\b(?:cannot|can'?t|could\s+n[o']?t|unable\s+to)\s+(?:be\s+)?"
-    r"(?:answer|determin|find|establish)"
-    r"|"
-    r"\b(?:is|are|was|were)\s+not\s+"
-    r"(?:discussed|mentioned|addressed|covered|described|provided|available|present)"
-    r"|"
-    r"\bthere\s+(?:is|are)\s+no\b[^.]{0,30}?"
-    r"\b(?:mention|discussion|information|evidence|reference)"
-    r")",
+    r"(?:i\s+(?:cannot|can't|am\s+unable\s+to)|i'm\s+unable\s+to|"
+    r"we\s+(?:cannot|can't|are\s+unable\s+to))\s+"
+    rf"{_ANSWER_REFUSAL}"
+    rf"|{_CONTEXT_SUBJECT}\s+(?:do\s+not|does\s+not|don't|doesn't)\s+{_ABSENCE_VERB}\b"
+    rf"|none\s+of\s+{_CONTEXT_SUBJECT}\s+{_ABSENCE_VERB}\b"
+    r"|there\s+is\s+(?:not\s+enough|insufficient)\s+(?:relevant\s+)?information\s+to\s+"
+    rf"{_ANSWER_REFUSAL}"
+    r")[^.!?]*[.!?]?",
+    re.IGNORECASE,
+)
+
+# Do not exempt an entire sentence when a second clause may assert a fact.
+# Deliberately conservative: even a harmless conjunction/list can keep a refusal
+# in the verifier path. Retain the full text and its citations rather than trying
+# to assign citations to clauses with another unreliable segmentation heuristic.
+_POSSIBLE_ADDITIONAL_CLAUSE = re.compile(
+    r"[,;:\u2014\u2013()\"\u201c\u201d]|\s-\s|"
+    r"\b(?:but|however|yet|although|though|whereas|nevertheless|nonetheless|"
+    r"instead|because|since|therefore|thus|so|if|unless|while|which|who|whose|that|and|or)\b",
     re.IGNORECASE,
 )
 
@@ -105,7 +116,16 @@ def _clean(text: str) -> str:
 
 
 def is_abstention(text: str) -> bool:
-    return bool(_ABSTENTION_PAT.search(text or ""))
+    """Recognize clear standalone refusals; ambiguous/mixed text stays verifiable.
+
+    This flag identifies a refusal form only. It does not validate whether the
+    retrieved evidence really lacks the answer, or establish factual correctness.
+    """
+    normalized = re.sub(r"\s+", " ", (text or "").strip()).replace("\u2019", "'")
+    return bool(
+        _ABSTENTION_PAT.fullmatch(normalized)
+        and not _POSSIBLE_ADDITIONAL_CLAUSE.search(normalized)
+    )
 
 
 def extract_claims(answer: str) -> list[dict]:

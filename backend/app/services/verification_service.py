@@ -85,7 +85,7 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
 
     verification_status is one of:
         "verified"           real components, substantive claims extracted and scored
-        "abstained"          extracted claims are all correct refusal/meta statements
+        "abstained"          extracted claims are all recognized standalone refusals
         "development_stub"   a stub verifier and/or generator was used — scores are NOT real
         "unverifiable"       no claims could be extracted, so nothing was verified
         "generation_failed"  generation was unavailable; nothing was generated or verified
@@ -176,8 +176,9 @@ async def verify_question(question: str, top_k: int = 5) -> dict:
     metrics.STAGE_LATENCY.labels(stage="verify").observe(time.perf_counter() - verify_start)
 
     # --- 4: the headline metric ----------------------------------------------
-    # Abstentions are correct refusal/meta statements, not factual claims for a binary
-    # support verifier. Keep them visible, but exclude them from both metric denominators.
+    # Only conservatively recognized standalone refusals are excluded. This does not
+    # establish that a refusal is justified by the sources. Mixed/factual statements stay
+    # in the verifier path and both metric denominators.
     n_claims = len(scored_claims)
     substantive_claims = [
         c for c in scored_claims if c["label"] != "Abstention"

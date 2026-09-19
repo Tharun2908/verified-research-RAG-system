@@ -282,13 +282,20 @@ class TestGenerationFailureDoesNotLoadTheVerifier:
 
 
 class TestAbstentionHandling:
-    def test_all_abstention_answer_is_not_scored_or_reported_as_zero_percent(
-        self, client, monkeypatch
+    @pytest.mark.parametrize("answer,n_abstentions,n_substantive", [
+        ("The provided sources do not discuss quantum computing.", 1, 0),
+        ("The model cannot determine whether a claim is supported [1].", 0, 1),
+        ("The sources do not discuss this, but RAG was invented in 1995 [1].", 0, 1),
+        ("I cannot answer confidently. RAG requires quantum hardware [1].", 1, 1),
+        ("I cannot answer confidently; RAG requires quantum hardware [1].", 0, 1),
+    ])
+    def test_only_standalone_abstentions_are_excluded_from_verification(
+        self, client, monkeypatch, answer, n_abstentions, n_substantive
     ):
         async def fake_generate(question: str, top_k: int = 5):
             return {
                 "question": question,
-                "answer": "The provided sources do not discuss quantum computing.",
+                "answer": answer,
                 "evidence": [{
                     "number": 1,
                     "title": "RAG paper",
@@ -302,7 +309,7 @@ class TestAbstentionHandling:
         class SpyVerifier:
             def verify(self, claim_text, evidence_text):
                 calls.append((claim_text, evidence_text))
-                raise AssertionError("abstentions must not be sent to the verifier")
+                return 0.1  # Unsupported, so an accidental exclusion changes the rate.
 
             def describe(self):
                 return {"implementation": "RealVerifier", "model": "m", "revision": "r"}
@@ -341,13 +348,23 @@ class TestAbstentionHandling:
         assert r.status_code == 200
         body = r.json()
 
-        assert calls == []
-        assert body["verification_status"] == "abstained"
-        assert body["n_claims"] == 1
-        assert body["n_substantive_claims"] == 0
-        assert body["n_abstentions"] == 1
-        assert body["n_unsupported"] == 0
-        assert body["unsupported_claim_rate"] is None
-        assert body["grounding_score"] is None
-        assert body["claims"][0]["label"] == "Abstention"
-        assert body["claims"][0]["support_score"] is None
+        assert len(calls) == n_substantive
+        assert body["verification_status"] == ("verified" if n_substantive else "abstained")
+        assert body["n_claims"] == n_abstentions + n_substantive
+        assert body["n_substantive_claims"] == n_substantive
+        assert body["n_abstentions"] == n_abstentions
+        assert body["n_unsupported"] == n_substantive
+        if n_substantive:
+            assert body["unsupported_claim_rate"] == 1.0
+            assert body["grounding_score"] == pytest.approx(0.1)
+            assert all("retrieval-augmented generation" in evidence for _, evidence in calls)
+            assert any("RAG" in claim or "model" in claim for claim, _ in calls)
+        else:
+            assert body["unsupported_claim_rate"] is None
+            assert body["grounding_score"] is None
+        for claim in body["claims"]:
+            if claim["label"] == "Abstention":
+                assert claim["support_score"] is None
+            else:
+                assert claim["label"] == "Unsupported"
+                assert claim["support_score"] == pytest.approx(0.1)
